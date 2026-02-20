@@ -147,17 +147,34 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/overview', (_req, res) => {
-  const agents = parseAllAgents();
+  const fullAgents = parseAllAgents();
   const summary = {
-    agentCount: agents.length,
-    activeAgents: agents.filter((a) => a.status === 'active').length,
-    totalSessions: agents.reduce((s, a) => s + a.sessionCount, 0),
-    totalActiveSessions: agents.reduce((s, a) => s + a.activeSessions, 0),
-    totalTokens: agents.reduce((s, a) => s + a.totalTokens, 0),
-    totalInputTokens: agents.reduce((s, a) => s + a.totalInputTokens, 0),
-    totalOutputTokens: agents.reduce((s, a) => s + a.totalOutputTokens, 0),
-    estimatedCostUSD: agents.reduce((s, a) => s + (a.estimatedCost || 0), 0),
+    agentCount: fullAgents.length,
+    activeAgents: fullAgents.filter((a) => a.status === 'active').length,
+    totalSessions: fullAgents.reduce((s, a) => s + a.sessionCount, 0),
+    totalActiveSessions: fullAgents.reduce((s, a) => s + a.activeSessions, 0),
+    totalTokens: fullAgents.reduce((s, a) => s + a.totalTokens, 0),
+    totalInputTokens: fullAgents.reduce((s, a) => s + a.totalInputTokens, 0),
+    totalOutputTokens: fullAgents.reduce((s, a) => s + a.totalOutputTokens, 0),
+    estimatedCostUSD: fullAgents.reduce((s, a) => s + (a.estimatedCost || 0), 0),
   };
+
+  const agents = fullAgents.map((a) => ({
+    id: a.id,
+    name: a.name,
+    description: a.description,
+    status: a.status,
+    sessionCount: a.sessionCount,
+    activeSessions: a.activeSessions,
+    totalInputTokens: a.totalInputTokens,
+    totalOutputTokens: a.totalOutputTokens,
+    totalTokens: a.totalTokens,
+    estimatedCost: a.estimatedCost,
+    lastActivity: a.lastActivity,
+    // small preview only for model visibility in overview
+    sessions: (a.sessions || []).slice(0, 3),
+  }));
+
   res.json({ timestamp: new Date().toISOString(), summary, gateway: getGateway(), host: getHost(), agents });
 });
 

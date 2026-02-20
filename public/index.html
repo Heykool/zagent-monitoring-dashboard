@@ -654,7 +654,7 @@ function agentCard(a){
   const recentSession = a.sessions?.find(s => s.model);
   const model = recentSession?.model || recentSession?.provider || '';
   return `
-  <div class="agent-card ${a.status==='active'?'active-agent':''}" onclick='openDrawer(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+  <div class="agent-card ${a.status==='active'?'active-agent':''}" onclick="openDrawer('${esc(a.id)}')">
     <div class="ac-head">
       <div>
         <div class="ac-name">${esc(a.name)}</div>
@@ -679,27 +679,26 @@ function agentCard(a){
 function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 
 // ─── Drawer ───────────────────────────────────────────────────────────
-function openDrawer(agentData){
-  // Handle both ID string and full object
-  let a;
-  if (typeof agentData === 'string') {
-    a = allAgents.find(x=>x.id===agentData);
-  } else {
-    a = agentData;
-  }
-  if(!a) return;
-  document.getElementById('drawer-title').textContent = a.name || a.id;
-  document.getElementById('drawer-id').textContent = a.id;
+async function openDrawer(agentId){
+  const base = allAgents.find(x=>x.id===agentId) || { id: agentId, name: agentId };
+  document.getElementById('drawer-title').textContent = base.name || base.id;
+  document.getElementById('drawer-id').textContent = base.id;
 
   const body = document.getElementById('drawer-body');
-  const sessions = a.sessions || [];
+  body.innerHTML = '<div class="empty">Loading agent details…</div>';
 
+  let a = base;
+  try {
+    const r = await fetch('/api/agents/' + encodeURIComponent(agentId));
+    if (r.ok) a = await r.json();
+  } catch {}
+
+  const sessions = a.sessions || [];
   const memoryFiles = a.memory || [];
   const configs = a.configs || {};
   const skillMd = configs.SKILL || '';
   const soulMd = configs.SOUL || '';
   const agentsMd = configs.AGENTS || '';
-  const memoryMd = configs.MEMORY || '';
 
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
