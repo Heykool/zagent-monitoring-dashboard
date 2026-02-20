@@ -249,6 +249,11 @@ header{
   background:var(--green);box-shadow:0 0 12px var(--green);
 }
 .agent-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+
+/* Tab buttons */
+.tab-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.72rem;font-family:var(--mono);transition:all .2s;}
+.tab-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.tab-btn.active{background:var(--cyan);border-color:var(--cyan);color:var(--bg);}
 .ac-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;}
 .ac-name{font-size:.95rem;color:var(--text-hi);font-weight:600;line-height:1.3;}
 .ac-id{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);margin-top:2px;}
@@ -378,7 +383,7 @@ header{
     <div class="header-meta">
       <div id="gw-badge" class="badge badge-offline">GW OFFLINE</div>
       <div id="last-update">—</div>
-      <div id="ar-ring" data-tip="Auto-refresh 5s" onclick="toggleAutoRefresh()">
+      <div id="ar-ring" data-tip="Auto-refresh 15min" onclick="toggleAutoRefresh()">
         <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" stroke="var(--border2)" stroke-width="2.5" fill="none"/><circle id="ar-circle" cx="10" cy="10" r="9"/></svg>
       </div>
       <button id="refresh-btn" onclick="loadData()"><span id="spin" class="spin hidden"></span>Refresh</button>
@@ -512,7 +517,7 @@ header{
 let allAgents = [];
 let arTimer = null;
 let arActive = true;
-const AR_INTERVAL = 5000;
+const AR_INTERVAL = 900000; // 15 minutes
 
 // ─── Formatting ──────────────────────────────────────────────────────
 function fmtNum(n){
@@ -645,8 +650,11 @@ function agentCard(a){
   const cost = a.estimatedCost !== null && a.estimatedCost !== undefined
     ? `<span class="ac-cost">$${a.estimatedCost.toFixed(4)}</span>` : '';
   const lastSeen = fmtTime(a.lastActivity);
+  // Get most recent model from sessions
+  const recentSession = a.sessions?.find(s => s.model);
+  const model = recentSession?.model || recentSession?.provider || '';
   return `
-  <div class="agent-card ${a.status==='active'?'active-agent':''}" onclick="openDrawer(${JSON.stringify(a.id)})">
+  <div class="agent-card ${a.status==='active'?'active-agent':''}" onclick='openDrawer(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
     <div class="ac-head">
       <div>
         <div class="ac-name">${esc(a.name)}</div>
@@ -654,6 +662,7 @@ function agentCard(a){
       </div>
       <div class="ac-status ${a.status}">${a.status.toUpperCase()}</div>
     </div>
+    ${model ? `<div class="ac-desc" style="color:var(--cyan)">Model: ${esc(model)}</div>` : ''}
     ${a.description ? `<div class="ac-desc">${esc(a.description)}</div>` : ''}
     <div class="ac-stats">
       <div class="ac-stat"><div class="ac-stat-val">${a.sessionCount}</div><div class="ac-stat-label">Sessions</div></div>
@@ -670,8 +679,14 @@ function agentCard(a){
 function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 
 // ─── Drawer ───────────────────────────────────────────────────────────
-function openDrawer(agentId){
-  const a = allAgents.find(x=>x.id===agentId);
+function openDrawer(agentData){
+  // Handle both ID string and full object
+  let a;
+  if (typeof agentData === 'string') {
+    a = allAgents.find(x=>x.id===agentData);
+  } else {
+    a = agentData;
+  }
   if(!a) return;
   document.getElementById('drawer-title').textContent = a.name || a.id;
   document.getElementById('drawer-id').textContent = a.id;
@@ -680,7 +695,11 @@ function openDrawer(agentId){
   const sessions = a.sessions || [];
 
   const memoryFiles = a.memory || [];
-  const skillMd = a.configs?.SKILL || '';
+  const configs = a.configs || {};
+  const skillMd = configs.SKILL || '';
+  const soulMd = configs.SOUL || '';
+  const agentsMd = configs.AGENTS || '';
+  const memoryMd = configs.MEMORY || '';
 
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
@@ -689,41 +708,77 @@ function openDrawer(agentId){
       <div class="load-pill"><div class="lp-val">${fmtNum(a.totalInputTokens)}</div><div class="lp-label">In Tokens</div></div>
       <div class="load-pill"><div class="lp-val">${fmtNum(a.totalOutputTokens)}</div><div class="lp-label">Out Tokens</div></div>
     </div>
-    <div style="font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);margin-bottom:12px;">
-      Recent Sessions (${sessions.length})
+    
+    <!-- Tab buttons -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+      <button onclick="showDrawerTab('sessions')" class="tab-btn active" id="tab-btn-sessions">Sessions</button>
+      <button onclick="showDrawerTab('memory')" class="tab-btn" id="tab-btn-memory">Memory</button>
+      <button onclick="showDrawerTab('skill')" class="tab-btn" id="tab-btn-skill">SKILL.md</button>
+      <button onclick="showDrawerTab('soul')" class="tab-btn" id="tab-btn-soul">SOUL.md</button>
+      <button onclick="showDrawerTab('agents')" class="tab-btn" id="tab-btn-agents">AGENTS.md</button>
     </div>
-    ${sessions.length ? sessions.map(s=>`
-      <div class="session-item">
-        <div class="si-head">
-          <div class="si-id">${esc(s.id)}</div>
-          <div class="si-status ${s.status||'idle'}">${(s.status||'idle').toUpperCase()}</div>
-        </div>
-        ${s.model?`<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:4px;">Model: <span style="color:var(--cyan);font-family:var(--mono)">${esc(s.model)}</span></div>`:''}
-        <div class="si-tokens">
-          <div class="si-tok">In:<span>${fmtNum(s.inputTokens)}</span></div>
-          <div class="si-tok">Out:<span>${fmtNum(s.outputTokens)}</span></div>
-          <div class="si-tok">Total:<span>${fmtNum((s.inputTokens||0)+(s.outputTokens||0))}</span></div>
-        </div>
-        <div class="si-time">${s.updatedAt ? 'Updated: '+fmtDateTime(s.updatedAt) : s.createdAt ? 'Created: '+fmtDateTime(s.createdAt) : ''}</div>
+    
+    <!-- Sessions Tab -->
+    <div id="drawer-tab-sessions">
+      <div style="font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);margin-bottom:12px;">
+        Recent Sessions (${sessions.length})
       </div>
-    `).join('') : '<div class="empty">No sessions</div>'}
-
-    <div style="font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);margin:18px 0 10px;">Memory (full text)</div>
-    ${memoryFiles.length ? memoryFiles.map(m => `
-      <div class="session-item">
-        <div class="si-head"><div class="si-id">${esc(m.file)}</div><div class="si-time">${fmtDateTime(m.mtime)}</div></div>
-        <pre style="white-space:pre-wrap;max-height:260px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(m.content || '')}</pre>
-      </div>
-    `).join('') : '<div class="empty">No memory files</div>'}
-
-    <div style="font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);margin:18px 0 10px;">SKILL.md (full text)</div>
-    <div class="session-item">
-      <pre style="white-space:pre-wrap;max-height:420px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(skillMd || 'No SKILL.md found')}</pre>
+      ${sessions.length ? sessions.map(s=>`
+        <div class="session-item">
+          <div class="si-head">
+            <div class="si-id">${esc(s.id)}</div>
+            <div class="si-status ${s.status||'idle'}">${(s.status||'idle').toUpperCase()}</div>
+          </div>
+          ${s.model?`<div style="font-size:.72rem;color:var(--text-dim);margin-bottom:4px;">Model: <span style="color:var(--cyan);font-family:var(--mono)">${esc(s.model)}</span></div>`:''}
+          <div class="si-tokens">
+            <div class="si-tok">In:<span>${fmtNum(s.inputTokens)}</span></div>
+            <div class="si-tok">Out:<span>${fmtNum(s.outputTokens)}</span></div>
+            <div class="si-tok">Total:<span>${fmtNum((s.inputTokens||0)+(s.outputTokens||0))}</span></div>
+          </div>
+          <div class="si-time">${s.updatedAt ? 'Updated: '+fmtDateTime(s.updatedAt) : s.createdAt ? 'Created: '+fmtDateTime(s.createdAt) : ''}</div>
+        </div>
+      `).join('') : '<div class="empty">No sessions</div>'}
+    </div>
+    
+    <!-- Memory Tab -->
+    <div id="drawer-tab-memory" class="hidden">
+      ${memoryFiles.length ? memoryFiles.map(m => `
+        <div class="session-item">
+          <div class="si-head"><div class="si-id">${esc(m.file)}</div><div class="si-time">${fmtDateTime(m.mtime)}</div></div>
+          <pre style="white-space:pre-wrap;max-height:400px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(m.content || '')}</pre>
+        </div>
+      `).join('') : '<div class="empty">No memory files</div>'}
+    </div>
+    
+    <!-- SKILL Tab -->
+    <div id="drawer-tab-skill" class="hidden">
+      <pre style="white-space:pre-wrap;max-height:500px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(skillMd || 'No SKILL.md found')}</pre>
+    </div>
+    
+    <!-- SOUL Tab -->
+    <div id="drawer-tab-soul" class="hidden">
+      <pre style="white-space:pre-wrap;max-height:500px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(soulMd || 'No SOUL.md found')}</pre>
+    </div>
+    
+    <!-- AGENTS Tab -->
+    <div id="drawer-tab-agents" class="hidden">
+      <pre style="white-space:pre-wrap;max-height:500px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(agentsMd || 'No AGENTS.md found')}</pre>
     </div>
   `;
 
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
+}
+
+function showDrawerTab(tabName) {
+  // Hide all tabs
+  ['sessions','memory','skill','soul','agents'].forEach(t => {
+    document.getElementById('drawer-tab-'+t)?.classList.add('hidden');
+    document.getElementById('tab-btn-'+t)?.classList.remove('active');
+  });
+  // Show selected tab
+  document.getElementById('drawer-tab-'+tabName)?.classList.remove('hidden');
+  document.getElementById('tab-btn-'+tabName)?.classList.add('active');
 }
 
 function closeDrawer(){
