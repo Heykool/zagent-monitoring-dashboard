@@ -207,7 +207,9 @@ app.get('/api/overview', (_req, res) => {
     totalTokens: a.totalTokens,
     estimatedCost: a.estimatedCost,
     lastActivity: a.lastActivity,
-    // small preview only for model visibility in overview
+    // keep lightweight but include predictor payload for drawer fallback
+    predictorReport: a.id === 'zpredictor' ? a.predictorReport : null,
+    memoryFramework: a.id === 'zpredictor' ? a.memoryFramework : null,
     sessions: (a.sessions || []).slice(0, 3),
   }));
 
