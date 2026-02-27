@@ -92,6 +92,26 @@ function getPredictorReport(agentId) {
   };
 }
 
+
+function getMemoryFrameworkStatus(agentId) {
+  const ws = path.join(WORKSPACES_DIR, `workspace-${agentId}`);
+  const memMcp = path.join(ws, 'memory-mcp', 'memory_server.py');
+  const sem = path.join(ws, 'semantic_memory.py');
+  const memDir = path.join(ws, 'memory');
+  let latestMemoryFile = null;
+  let latestMemoryMtime = null;
+  if (fs.existsSync(memDir)) {
+    const files = fs.readdirSync(memDir).filter(f=>f.endsWith('.md')).map(f=>({f, t: fs.statSync(path.join(memDir,f)).mtimeMs})).sort((a,b)=>b.t-a.t);
+    if (files.length) { latestMemoryFile = files[0].f; latestMemoryMtime = files[0].t; }
+  }
+  return {
+    hasMemoryMcp: fs.existsSync(memMcp),
+    hasSemanticWrapper: fs.existsSync(sem),
+    latestMemoryFile,
+    latestMemoryMtime,
+  };
+}
+
 function parseAgent(agentId) {
   const sessionsMap = readJson(path.join(AGENTS_DIR, agentId, 'sessions', 'sessions.json'), {}) || {};
   const entries = Object.entries(sessionsMap);
@@ -140,6 +160,7 @@ function parseAgent(agentId) {
     sessions,
     memory: getMemoryFiles(agentId, 12), // full content
     predictorReport: getPredictorReport(agentId),
+    memoryFramework: getMemoryFrameworkStatus(agentId),
     configs: {
       SKILL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SKILL.md'), ''),
       SOUL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SOUL.md'), ''),
