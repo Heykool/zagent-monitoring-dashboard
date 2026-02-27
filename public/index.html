@@ -712,6 +712,7 @@ async function openDrawer(agentId){
   const agentsMd = configs.AGENTS || '';
   const predictor = a.predictorReport || null;
   const zhype = a.zhypeReport || null;
+  const zoption = a.zoptionReport || null;
   const memfw = a.memoryFramework || null;
 
   body.innerHTML = `
@@ -940,7 +941,71 @@ async function openDrawer(agentId){
           </table>
         </div>
       </div>
-      ` : '<div class="empty">No trading report available yet.</div>')}
+      ` : (zoption ? `
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">ZOption1MinTrader Summary</div><div class="si-time">${fmtDateTime(zoption.generated_at)} <button onclick="refreshTradingNow('zoption1mintrader')" style="margin-left:8px;background:#24304a;color:#cfe1ff;border:1px solid #3b4f77;border-radius:6px;padding:2px 8px;cursor:pointer">Refresh Live Now</button></div></div>
+        <div class="si-tokens">
+          <div class="si-tok">Open Positions:<span>${zoption.open_positions_summary?.count ?? 0}</span></div>
+          <div class="si-tok">Current Equity:<span>$${Number(zoption.equity_total || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total PnL Today:<span>$${Number(zoption.pnl_summary?.total_pnl_today || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total Gain %:<span>${(Number(zoption.pnl_summary?.total_gain_pct || 0)*100).toFixed(2)}%</span></div>
+        </div>
+      </div>
+
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">Current Open Positions</div></div>
+        <div style="overflow:auto">
+          <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Asset</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Side</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Amount</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">PnL</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">ROI</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Opened</th>
+            </tr></thead>
+            <tbody>
+              ${(zoption.open_positions||[]).map(p=>`<tr>
+                <td style="padding:6px">${esc(p.asset||p.symbol||'')}</td>
+                <td style="padding:6px">${esc(p.side||'')}</td>
+                <td style="padding:6px;text-align:right">$${Number(p.amount||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${Number(p.unrealized_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(p.unrealized_pnl||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right">${(Number(p.roi_est||0)*100).toFixed(2)}%</td>
+                <td style="padding:6px">${esc(p.opened_at||'')}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="session-item" style="margin-top:10px;">
+        <div class="si-head"><div class="si-id">Last 20 Closed Trades</div></div>
+        <div style="overflow:auto">
+          <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Time</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Result</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Asset</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Side</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Amount</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">PnL</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Gain %</th>
+            </tr></thead>
+            <tbody>
+              ${(zoption.closed_trades_recent||[]).map(c=>`<tr>
+                <td style="padding:6px">${esc(c.time||'')}</td>
+                <td style="padding:6px;color:${c.result==='WON'?'#26d07c':'#ff4d6a'}">${esc(c.result||'')}</td>
+                <td style="padding:6px">${esc(c.asset||c.symbol||'')}</td>
+                <td style="padding:6px">${esc(c.side||'')}</td>
+                <td style="padding:6px;text-align:right">$${Number(c.amount||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${Number(c.pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(c.pnl||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${Number(c.pnl_pct||0)>=0?'#26d07c':'#ff4d6a'}">${(Number(c.pnl_pct||0)*100).toFixed(2)}%</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : '<div class="empty">No trading report available yet.</div>'))}
     </div>
   `;
 

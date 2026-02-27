@@ -82,6 +82,13 @@ function getMemoryFiles(agentId, limit = 12) {
 
 
 
+
+function getZoptionReport(agentId) {
+  if (agentId !== 'zoption1mintrader') return null;
+  const p = path.join(WORKSPACES_DIR, 'workspace-zoption1mintrader', 'logs', 'zoption1min_report.json');
+  return readJson(p, null);
+}
+
 function getZhypeReport(agentId) {
   if (agentId !== 'zhypetrader') return null;
   const p = path.join(WORKSPACES_DIR, 'workspace-zhypetrader', 'logs', 'zhype_trading_report.json');
@@ -170,6 +177,7 @@ function parseAgent(agentId) {
     memory: getMemoryFiles(agentId, 12), // full content
     predictorReport: getPredictorReport(agentId),
     zhypeReport: getZhypeReport(agentId),
+    zoptionReport: getZoptionReport(agentId),
     memoryFramework: getMemoryFrameworkStatus(agentId),
     configs: {
       SKILL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SKILL.md'), ''),
@@ -192,7 +200,7 @@ function parseAllAgents() {
 app.post('/api/refresh-trading', (req, res) => {
   const agent = (req.query.agent || req.body?.agent || '').toString().trim();
   if (!agent) return res.status(400).json({ error: 'agent is required' });
-  if (!['zpredictor','zhypetrader'].includes(agent)) return res.status(400).json({ error: 'unsupported agent' });
+  if (!['zpredictor','zhypetrader','zoption1mintrader'].includes(agent)) return res.status(400).json({ error: 'unsupported agent' });
 
   const now = Date.now();
   const last = lastRefreshAt.get(agent) || 0;
@@ -206,6 +214,8 @@ app.post('/api/refresh-trading', (req, res) => {
     cmd = 'cd /root/.openclaw/workspace-zpredictor && AUTO_EXECUTE=false python3 reports/generate_comprehensive_report.py';
   } else if (agent === 'zhypetrader') {
     cmd = 'cd /root/.openclaw/workspace-zhypetrader && python3 reports/generate_hype_dashboard_report.py';
+  } else if (agent === 'zoption1mintrader') {
+    cmd = 'cd /root/.openclaw/workspace-zoption1mintrader && python3 reports/generate_option_dashboard_report.py';
   }
 
   const r = spawnSync('/usr/bin/bash', ['-lc', cmd], { encoding: 'utf8', timeout: 120000 });
@@ -248,6 +258,7 @@ app.get('/api/overview', (_req, res) => {
     // keep lightweight but include predictor payload for drawer fallback
     predictorReport: a.id === 'zpredictor' ? a.predictorReport : null,
     zhypeReport: a.id === 'zhypetrader' ? a.zhypeReport : null,
+    zoptionReport: a.id === 'zoption1mintrader' ? a.zoptionReport : null,
     memoryFramework: a.id === 'zpredictor' ? a.memoryFramework : null,
     sessions: (a.sessions || []).slice(0, 3),
   }));
