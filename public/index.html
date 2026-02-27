@@ -774,10 +774,11 @@ async function openDrawer(agentId){
         <div class="si-tokens">
           <div class="si-tok">Open Positions:<span>${predictor.open_positions_summary?.count ?? 0}</span></div>
           <div class="si-tok">Total Cost:<span>$${Number(predictor.open_positions_summary?.total_cost || 0).toFixed(2)}</span></div>
-          <div class="si-tok">PnL:<span>$${Number(predictor.open_positions_summary?.total_unrealized_pnl || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Current Open Unrealized PnL:<span>$${Number(predictor.open_positions_summary?.total_unrealized_pnl || 0).toFixed(2)}</span></div>
           <div class="si-tok">Open ROI:<span>${(Number(predictor.open_positions_summary?.open_roi || 0)*100).toFixed(2)}%</span></div>
           <div class="si-tok">Closed PnL Today:<span>$${Number(predictor.pnl_today_summary?.closed_realized_pnl_est || 0).toFixed(2)}</span></div>
           <div class="si-tok">Total PnL Today:<span>$${Number(predictor.pnl_today_summary?.total_pnl_today_est || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total ROI Today:<span>${(Number(predictor.pnl_today_summary?.total_roi_today_est || 0)*100).toFixed(2)}%</span></div>
         </div>
       </div>
 
