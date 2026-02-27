@@ -867,9 +867,12 @@ async function openDrawer(agentId){
         <div class="si-head"><div class="si-id">ZHyperTrader Summary</div><div class="si-time">${fmtDateTime(zhype.generated_at)}</div></div>
         <div class="si-tokens">
           <div class="si-tok">Open Positions:<span>${zhype.open_positions_summary?.count ?? 0}</span></div>
+          <div class="si-tok">Current Equity:<span>$${Number(zhype.equity_total || 0).toFixed(2)}</span></div>
           <div class="si-tok">Unrealized PnL:<span>$${Number(zhype.open_positions_summary?.unrealized_pnl || 0).toFixed(2)}</span></div>
           <div class="si-tok">Closed PnL Today:<span>$${Number(zhype.pnl_summary?.closed_pnl_today || 0).toFixed(2)}</span></div>
           <div class="si-tok">Total PnL Today:<span>$${Number(zhype.pnl_summary?.total_pnl_today || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Gain % Today:<span>${(Number(zhype.pnl_summary?.total_pnl_today_pct_equity || 0)*100).toFixed(2)}%</span></div>
+          <div class="si-tok">Closed Gain % Today:<span>${(Number(zhype.pnl_summary?.closed_pnl_today_pct_equity || 0)*100).toFixed(2)}%</span></div>
           <div class="si-tok">Total PnL All-time:<span>$${Number(zhype.pnl_summary?.total_pnl_all_time_est || 0).toFixed(2)}</span></div>
         </div>
       </div>
@@ -911,6 +914,7 @@ async function openDrawer(agentId){
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Coin</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Dir</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Pnl</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Gain %</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Tx</th>
             </tr></thead>
             <tbody>
@@ -919,6 +923,7 @@ async function openDrawer(agentId){
                 <td style="padding:6px">${esc(c.coin||'')}</td>
                 <td style="padding:6px">${esc(c.dir||'')}</td>
                 <td style="padding:6px;text-align:right;color:${Number(c.closed_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(c.closed_pnl||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${Number(c.closed_pnl_pct||0)>=0?'#26d07c':'#ff4d6a'}">${(Number(c.closed_pnl_pct||0)*100).toFixed(2)}%</td>
                 <td style="padding:6px">${c.hash?`<a href="https://hypurrscan.io/tx/${encodeURIComponent(c.hash)}" target="_blank" style="color:var(--cyan)">${esc(String(c.hash).slice(0,10))}…</a>`:'n/a'}</td>
               </tr>`).join('')}
             </tbody>
