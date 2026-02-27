@@ -903,7 +903,7 @@ async function openDrawer(agentId){
       </div>
 
       <div class="session-item" style="margin-top:10px;">
-        <div class="si-head"><div class="si-id">Closed Trades Today</div></div>
+        <div class="si-head"><div class="si-id">Last 20 Closed Trades</div></div>
         <div style="overflow:auto">
           <table style="width:100%;font-size:.72rem;border-collapse:collapse">
             <thead><tr>
@@ -914,7 +914,7 @@ async function openDrawer(agentId){
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Tx</th>
             </tr></thead>
             <tbody>
-              ${(zhype.closed_trades_today||[]).map(c=>`<tr>
+              ${(zhype.closed_trades_recent||zhype.closed_trades_today||[]).map(c=>`<tr>
                 <td style="padding:6px">${esc(c.time||'')}</td>
                 <td style="padding:6px">${esc(c.coin||'')}</td>
                 <td style="padding:6px">${esc(c.dir||'')}</td>
