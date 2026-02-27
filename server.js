@@ -80,6 +80,13 @@ function getMemoryFiles(agentId, limit = 12) {
 }
 
 
+
+function getZhypeReport(agentId) {
+  if (agentId !== 'zhypetrader') return null;
+  const p = path.join(WORKSPACES_DIR, 'workspace-zhypetrader', 'logs', 'zhype_trading_report.json');
+  return readJson(p, null);
+}
+
 function getPredictorReport(agentId) {
   if (agentId !== 'zpredictor') return null;
   const base = path.join(WORKSPACES_DIR, 'workspace-zpredictor', 'logs');
@@ -161,6 +168,7 @@ function parseAgent(agentId) {
     sessions,
     memory: getMemoryFiles(agentId, 12), // full content
     predictorReport: getPredictorReport(agentId),
+    zhypeReport: getZhypeReport(agentId),
     memoryFramework: getMemoryFrameworkStatus(agentId),
     configs: {
       SKILL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SKILL.md'), ''),
@@ -210,6 +218,7 @@ app.get('/api/overview', (_req, res) => {
     lastActivity: a.lastActivity,
     // keep lightweight but include predictor payload for drawer fallback
     predictorReport: a.id === 'zpredictor' ? a.predictorReport : null,
+    zhypeReport: a.id === 'zhypetrader' ? a.zhypeReport : null,
     memoryFramework: a.id === 'zpredictor' ? a.memoryFramework : null,
     sessions: (a.sessions || []).slice(0, 3),
   }));

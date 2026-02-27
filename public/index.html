@@ -700,6 +700,7 @@ async function openDrawer(agentId){
   const soulMd = configs.SOUL || '';
   const agentsMd = configs.AGENTS || '';
   const predictor = a.predictorReport || null;
+  const zhype = a.zhypeReport || null;
   const memfw = a.memoryFramework || null;
 
   body.innerHTML = `
@@ -861,7 +862,70 @@ async function openDrawer(agentId){
       </div>
       </div>
 
-      ` : '<div class="empty">No predictor trading report available yet.</div>'}
+      ` : (zhype ? `
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">ZHyperTrader Summary</div><div class="si-time">${fmtDateTime(zhype.generated_at)}</div></div>
+        <div class="si-tokens">
+          <div class="si-tok">Open Positions:<span>${zhype.open_positions_summary?.count ?? 0}</span></div>
+          <div class="si-tok">Unrealized PnL:<span>$${Number(zhype.open_positions_summary?.unrealized_pnl || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Closed PnL Today:<span>$${Number(zhype.pnl_summary?.closed_pnl_today || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total PnL Today:<span>$${Number(zhype.pnl_summary?.total_pnl_today || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total PnL All-time:<span>$${Number(zhype.pnl_summary?.total_pnl_all_time_est || 0).toFixed(2)}</span></div>
+        </div>
+      </div>
+
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">Current Open Positions</div></div>
+        <div style="overflow:auto">
+          <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Coin</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Side</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Size</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Entry</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Lev</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">PnL</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">ROI est</th>
+            </tr></thead>
+            <tbody>
+              ${(zhype.open_positions||[]).map(p=>`<tr>
+                <td style="padding:6px">${esc(p.coin||'')}</td>
+                <td style="padding:6px">${esc(p.side||'')}</td>
+                <td style="padding:6px;text-align:right">${Number(p.size||0).toFixed(4)}</td>
+                <td style="padding:6px;text-align:right">$${Number(p.entry_price||0).toFixed(4)}</td>
+                <td style="padding:6px;text-align:right">${Number(p.leverage||0).toFixed(1)}x</td>
+                <td style="padding:6px;text-align:right;color:${Number(p.unrealized_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(p.unrealized_pnl||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right">${(Number(p.roi_est||0)*100).toFixed(2)}%</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="session-item" style="margin-top:10px;">
+        <div class="si-head"><div class="si-id">Closed Trades Today</div></div>
+        <div style="overflow:auto">
+          <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Time</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Coin</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Dir</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Pnl</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Tx</th>
+            </tr></thead>
+            <tbody>
+              ${(zhype.closed_trades_today||[]).map(c=>`<tr>
+                <td style="padding:6px">${esc(c.time||'')}</td>
+                <td style="padding:6px">${esc(c.coin||'')}</td>
+                <td style="padding:6px">${esc(c.dir||'')}</td>
+                <td style="padding:6px;text-align:right;color:${Number(c.closed_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(c.closed_pnl||0).toFixed(2)}</td>
+                <td style="padding:6px">${c.hash?`<a href="https://hypurrscan.io/tx/${encodeURIComponent(c.hash)}" target="_blank" style="color:var(--cyan)">${esc(String(c.hash).slice(0,10))}…</a>`:'n/a'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : '<div class="empty">No trading report available yet.</div>')}
     </div>
   `;
 
