@@ -189,9 +189,22 @@ function parseAgent(agentId) {
 }
 
 function parseAllAgents() {
-  if (!fs.existsSync(AGENTS_DIR)) return [];
-  return fs.readdirSync(AGENTS_DIR)
-    .filter((d) => { try { return fs.statSync(path.join(AGENTS_DIR, d)).isDirectory(); } catch { return false; } })
+  const agentIds = new Set();
+
+  if (fs.existsSync(AGENTS_DIR)) {
+    fs.readdirSync(AGENTS_DIR)
+      .filter((d) => { try { return fs.statSync(path.join(AGENTS_DIR, d)).isDirectory(); } catch { return false; } })
+      .forEach((d) => agentIds.add(d));
+  }
+
+  // fallback: include workspace-only agents (e.g., newly created traders)
+  if (fs.existsSync(WORKSPACES_DIR)) {
+    fs.readdirSync(WORKSPACES_DIR)
+      .filter((d) => d.startsWith('workspace-'))
+      .forEach((d) => agentIds.add(d.replace(/^workspace-/, '')));
+  }
+
+  return [...agentIds]
     .map(parseAgent)
     .sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 }
