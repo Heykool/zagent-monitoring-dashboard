@@ -12,6 +12,7 @@ const WORKSPACES_DIR = process.env.OPENCLAW_WORKSPACES_DIR || '/root/.openclaw';
 const INPUT_COST_PER_M = Number(process.env.INPUT_COST_PER_M || 0.5);
 const OUTPUT_COST_PER_M = Number(process.env.OUTPUT_COST_PER_M || 1.5);
 
+app.use((req,res,next)=>{res.setHeader('Cache-Control','no-store'); next();});
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
