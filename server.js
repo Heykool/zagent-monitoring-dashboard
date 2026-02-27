@@ -78,6 +78,20 @@ function getMemoryFiles(agentId, limit = 12) {
     .map((x) => ({ file: x.file, mtime: x.mtime, content: readText(x.p, '') })); // full text
 }
 
+
+function getPredictorReport(agentId) {
+  if (agentId !== 'zpredictor') return null;
+  const base = path.join(WORKSPACES_DIR, 'workspace-zpredictor', 'logs');
+  const jsonPath = path.join(base, 'zpredictor_comprehensive_report.json');
+  const mdPath = path.join(base, 'zpredictor_comprehensive_report.md');
+  const report = readJson(jsonPath, null);
+  if (!report) return null;
+  return {
+    ...report,
+    markdown: readText(mdPath, ''),
+  };
+}
+
 function parseAgent(agentId) {
   const sessionsMap = readJson(path.join(AGENTS_DIR, agentId, 'sessions', 'sessions.json'), {}) || {};
   const entries = Object.entries(sessionsMap);
@@ -125,6 +139,7 @@ function parseAgent(agentId) {
     lastActivity: lastActivity || null,
     sessions,
     memory: getMemoryFiles(agentId, 12), // full content
+    predictorReport: getPredictorReport(agentId),
     configs: {
       SKILL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SKILL.md'), ''),
       SOUL: readText(path.join(WORKSPACES_DIR, `workspace-${agentId}`, 'SOUL.md'), ''),

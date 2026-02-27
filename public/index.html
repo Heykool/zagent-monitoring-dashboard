@@ -699,6 +699,7 @@ async function openDrawer(agentId){
   const skillMd = configs.SKILL || '';
   const soulMd = configs.SOUL || '';
   const agentsMd = configs.AGENTS || '';
+  const predictor = a.predictorReport || null;
 
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
@@ -715,6 +716,7 @@ async function openDrawer(agentId){
       <button onclick="showDrawerTab('skill')" class="tab-btn" id="tab-btn-skill">SKILL.md</button>
       <button onclick="showDrawerTab('soul')" class="tab-btn" id="tab-btn-soul">SOUL.md</button>
       <button onclick="showDrawerTab('agents')" class="tab-btn" id="tab-btn-agents">AGENTS.md</button>
+      <button onclick="showDrawerTab('trading')" class="tab-btn" id="tab-btn-trading">Trading</button>
     </div>
     
     <!-- Sessions Tab -->
@@ -763,6 +765,51 @@ async function openDrawer(agentId){
     <div id="drawer-tab-agents" class="hidden">
       <pre style="white-space:pre-wrap;max-height:500px;overflow:auto;background:#0f1423;border:1px solid #2a3347;padding:10px;border-radius:8px;color:#c8d8f0;font-size:.72rem;">${esc(agentsMd || 'No AGENTS.md found')}</pre>
     </div>
+
+    <!-- Trading Tab -->
+    <div id="drawer-tab-trading" class="hidden">
+      ${predictor ? `
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">ZPredictor Trading Summary</div><div class="si-time">${fmtDateTime(predictor.generated_at)}</div></div>
+        <div class="si-tokens">
+          <div class="si-tok">Open Positions:<span>${predictor.open_positions_summary?.count ?? 0}</span></div>
+          <div class="si-tok">Total Cost:<span>$${Number(predictor.open_positions_summary?.total_cost || 0).toFixed(2)}</span></div>
+          <div class="si-tok">PnL:<span>$${Number(predictor.open_positions_summary?.total_unrealized_pnl || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Open ROI:<span>${(Number(predictor.open_positions_summary?.open_roi || 0)*100).toFixed(2)}%</span></div>
+        </div>
+      </div>
+
+      <div class="session-item">
+        <div class="si-head"><div class="si-id">Current Open Positions</div></div>
+        <div style="overflow:auto">
+          <table style="width:100%;font-size:.72rem;border-collapse:collapse">
+            <thead><tr>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Action</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Symbol</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Side</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Amount</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">PnL</th>
+              <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">ROI</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Opened</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Market</th>
+            </tr></thead>
+            <tbody>
+              ${(predictor.open_positions||[]).map(p=>`<tr>
+                <td style="padding:6px">${esc(p.action_suggestion||'HOLD')}</td>
+                <td style="padding:6px">${esc(p.symbol||'?')}</td>
+                <td style="padding:6px">${esc(p.side||'')}</td>
+                <td style="padding:6px;text-align:right">$${Number(p.amount_usd||p.cost||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${Number(p.unrealized_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(p.unrealized_pnl||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right">${(Number(p.roi||0)*100).toFixed(2)}%</td>
+                <td style="padding:6px">${esc(p.opened_at||'unknown')}</td>
+                <td style="padding:6px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.title||'')}">${esc(p.title||'')}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : '<div class="empty">No predictor trading report available yet.</div>'}
+    </div>
   `;
 
   document.getElementById('drawer-overlay').classList.add('open');
@@ -771,7 +818,7 @@ async function openDrawer(agentId){
 
 function showDrawerTab(tabName) {
   // Hide all tabs
-  ['sessions','memory','skill','soul','agents'].forEach(t => {
+  ['sessions','memory','skill','soul','agents','trading'].forEach(t => {
     document.getElementById('drawer-tab-'+t)?.classList.add('hidden');
     document.getElementById('tab-btn-'+t)?.classList.remove('active');
   });
