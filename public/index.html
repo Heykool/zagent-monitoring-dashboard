@@ -744,6 +744,17 @@ async function openDrawer(agentId){
     
     <!-- Memory Tab -->
     <div id="drawer-tab-memory" class="hidden">
+      <div class="session-item" style="margin-bottom:10px;">
+        <div class="si-head"><div class="si-id">Memory Framework Status</div></div>
+        <div class="si-tokens">
+          <div class="si-tok">MCP server:<span>${memfw?.hasMemoryMcp ? 'YES' : 'NO'}</span></div>
+          <div class="si-tok">Semantic wrapper:<span>${memfw?.hasSemanticWrapper ? 'YES' : 'NO'}</span></div>
+          <div class="si-tok">Latest memory file:<span>${memfw?.latestMemoryFile || 'none'}</span></div>
+          <div class="si-tok">Latest memory update:<span>${memfw?.latestMemoryMtime ? fmtDateTime(memfw.latestMemoryMtime) : 'n/a'}</span></div>
+        </div>
+      </div>
+
+
       ${memoryFiles.length ? memoryFiles.map(m => `
         <div class="session-item">
           <div class="si-head"><div class="si-id">${esc(m.file)}</div><div class="si-time">${fmtDateTime(m.mtime)}</div></div>
@@ -783,16 +794,7 @@ async function openDrawer(agentId){
         </div>
       </div>
 
-      <div class="session-item" style="margin-top:10px;">
-        <div class="si-head"><div class="si-id">Memory Framework Status</div></div>
-        <div class="si-tokens">
-          <div class="si-tok">MCP server:<span>${memfw?.hasMemoryMcp ? 'YES' : 'NO'}</span></div>
-          <div class="si-tok">Semantic wrapper:<span>${memfw?.hasSemanticWrapper ? 'YES' : 'NO'}</span></div>
-          <div class="si-tok">Latest memory file:<span>${memfw?.latestMemoryFile || 'none'}</span></div>
-          <div class="si-tok">Latest memory update:<span>${memfw?.latestMemoryMtime ? fmtDateTime(memfw.latestMemoryMtime) : 'n/a'}</span></div>
-        </div>
-      </div>
-
+      
       <div class="session-item">
         <div class="si-head"><div class="si-id">Current Open Positions</div></div>
         <div style="overflow:auto">
