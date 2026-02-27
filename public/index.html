@@ -791,6 +791,8 @@ async function openDrawer(agentId){
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">PnL</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">ROI</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Opened</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Bet End</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Ref</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Market</th>
             </tr></thead>
             <tbody>
@@ -802,6 +804,8 @@ async function openDrawer(agentId){
                 <td style="padding:6px;text-align:right;color:${Number(p.unrealized_pnl||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(p.unrealized_pnl||0).toFixed(2)}</td>
                 <td style="padding:6px;text-align:right">${(Number(p.roi||0)*100).toFixed(2)}%</td>
                 <td style="padding:6px">${esc(p.opened_at||'unknown')}</td>
+                <td style="padding:6px">${esc(p.expires_at||'n/a')}</td>
+                <td style="padding:6px">${p.order_ref?`<a href="https://basescan.org/search?f=0&q=${encodeURIComponent(p.order_ref)}" target="_blank" style="color:var(--cyan)">${esc(String(p.order_ref).slice(0,10))}…</a>`:'n/a'}</td>
                 <td style="padding:6px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.title||'')}">${esc(p.title||'')}</td>
               </tr>`).join('')}
             </tbody>
@@ -819,7 +823,7 @@ async function openDrawer(agentId){
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Entry</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">ROI if correct</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Status</th>
-              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Order</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Ref</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Market</th>
             </tr></thead>
             <tbody>
@@ -830,7 +834,7 @@ async function openDrawer(agentId){
                 <td style="padding:6px;text-align:right">$${Number(r.amount_usd||0).toFixed(3)}</td>
                 <td style="padding:6px;text-align:right">${(Number(r.roi_if_correct||0)*100).toFixed(2)}%</td>
                 <td style="padding:6px;color:${r.ok===true?'#26d07c':(r.ok===null?'#f5d020':'#ff4d6a')}">${r.ok===true?'OK':(r.ok===null?'PLAN':'FAIL')}</td>
-                <td style="padding:6px">${esc(r.order_id||'')}</td>
+                <td style="padding:6px">${r.order_id?`<a href=\"https://basescan.org/search?f=0&q=${encodeURIComponent(r.order_id)}\" target=\"_blank\" style=\"color:var(--cyan)\">${esc(String(r.order_id).slice(0,10))}…</a>`:'n/a'}</td>
                 <td style="padding:6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.slug||'')}">${esc(r.slug||'')}</td>
               </tr>`).join('')}
             </tbody>
