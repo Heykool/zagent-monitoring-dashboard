@@ -779,8 +779,8 @@ async function openDrawer(agentId){
           <div class="si-tok">Closed PnL Today:<span>$${Number(predictor.pnl_today_summary?.closed_realized_pnl_est || 0).toFixed(2)}</span></div>
           <div class="si-tok">Total PnL Today:<span>$${Number(predictor.pnl_today_summary?.total_pnl_today_est || 0).toFixed(2)}</span></div>
           <div class="si-tok">Total ROI Today:<span>${(Number(predictor.pnl_today_summary?.total_roi_today_est || 0)*100).toFixed(2)}%</span></div>
-          <div class="si-tok">Total PnL All-time:<span>$${Number(predictor.overall_summary?.total_pnl_all_est || 0).toFixed(2)}</span></div>
-          <div class="si-tok">Total ROI All-time:<span>${(Number(predictor.overall_summary?.total_roi_all_est || 0)*100).toFixed(2)}%</span></div>
+          <div class="si-tok">Total PnL (today scope):<span>$${Number(predictor.overall_summary?.total_pnl_all_est || 0).toFixed(2)}</span></div>
+          <div class="si-tok">Total ROI (today scope):<span>${(Number(predictor.overall_summary?.total_roi_all_est || 0)*100).toFixed(2)}%</span></div>
         </div>
       </div>
 
