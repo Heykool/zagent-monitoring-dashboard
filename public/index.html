@@ -868,11 +868,8 @@ async function openDrawer(agentId){
         <div class="si-tokens">
           <div class="si-tok">Open Positions:<span>${zhype.open_positions_summary?.count ?? 0}</span></div>
           <div class="si-tok">Current Equity:<span>$${Number(zhype.equity_total || 0).toFixed(2)}</span></div>
-          <div class="si-tok">Unrealized PnL:<span>$${Number(zhype.open_positions_summary?.unrealized_pnl || 0).toFixed(2)}</span></div>
-          <div class="si-tok">Closed PnL Today:<span>$${Number(zhype.pnl_summary?.closed_pnl_today || 0).toFixed(2)}</span></div>
           <div class="si-tok">Total PnL Today:<span>$${Number(zhype.pnl_summary?.total_pnl_today || 0).toFixed(2)}</span></div>
-          <div class="si-tok">Gain % Today:<span>${(Number(zhype.pnl_summary?.total_pnl_today_pct_equity || 0)*100).toFixed(2)}%</span></div>
-          <div class="si-tok">Closed Gain % Today:<span>${(Number(zhype.pnl_summary?.closed_pnl_today_pct_equity || 0)*100).toFixed(2)}%</span></div>
+          <div class="si-tok">Total Gain %:<span>${(Number(zhype.pnl_summary?.total_pnl_today_pct_equity || 0)*100).toFixed(2)}%</span></div>
           <div class="si-tok">Total PnL All-time:<span>$${Number(zhype.pnl_summary?.total_pnl_all_time_est || 0).toFixed(2)}</span></div>
         </div>
       </div>
