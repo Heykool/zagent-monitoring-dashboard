@@ -685,7 +685,7 @@ async function refreshTradingNow(agentId){
     const r=await fetch('/api/refresh-trading?agent='+encodeURIComponent(agentId),{method:'POST'});
     const d=await r.json();
     if(!r.ok){ alert('Refresh failed: '+(d.error||r.status)); return; }
-    await load();
+    await loadData();
     await openDrawer(agentId);
   }catch(e){ alert('Refresh error: '+e); }
 }
