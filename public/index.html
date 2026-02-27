@@ -679,6 +679,17 @@ function agentCard(a){
 function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 
 // ─── Drawer ───────────────────────────────────────────────────────────
+
+async function refreshTradingNow(agentId){
+  try{
+    const r=await fetch('/api/refresh-trading?agent='+encodeURIComponent(agentId),{method:'POST'});
+    const d=await r.json();
+    if(!r.ok){ alert('Refresh failed: '+(d.error||r.status)); return; }
+    await load();
+    await openDrawer(agentId);
+  }catch(e){ alert('Refresh error: '+e); }
+}
+
 async function openDrawer(agentId){
   const base = allAgents.find(x=>x.id===agentId) || { id: agentId, name: agentId };
   document.getElementById('drawer-title').textContent = base.name || base.id;
@@ -783,7 +794,7 @@ async function openDrawer(agentId){
     <div id="drawer-tab-trading" class="hidden">
       ${predictor ? `
       <div class="session-item">
-        <div class="si-head"><div class="si-id">ZPredictor Trading Summary</div><div class="si-time">${fmtDateTime(predictor.generated_at)}</div></div>
+        <div class="si-head"><div class="si-id">ZPredictor Trading Summary</div><div class="si-time">${fmtDateTime(predictor.generated_at)} <button onclick="refreshTradingNow('zpredictor')" style="margin-left:8px;background:#24304a;color:#cfe1ff;border:1px solid #3b4f77;border-radius:6px;padding:2px 8px;cursor:pointer">Refresh Live Now</button></div></div>
         <div class="si-tokens">
           <div class="si-tok">Open Positions:<span>${predictor.open_positions_summary?.count ?? 0}</span></div>
           <div class="si-tok">Closed PnL Today:<span>$${Number(predictor.pnl_today_summary?.closed_realized_pnl_est || 0).toFixed(2)}</span></div>
@@ -866,7 +877,7 @@ async function openDrawer(agentId){
 
       ` : (zhype ? `
       <div class="session-item">
-        <div class="si-head"><div class="si-id">ZHyperTrader Summary</div><div class="si-time">${fmtDateTime(zhype.generated_at)}</div></div>
+        <div class="si-head"><div class="si-id">ZHyperTrader Summary</div><div class="si-time">${fmtDateTime(zhype.generated_at)} <button onclick="refreshTradingNow('zhypetrader')" style="margin-left:8px;background:#24304a;color:#cfe1ff;border:1px solid #3b4f77;border-radius:6px;padding:2px 8px;cursor:pointer">Refresh Live Now</button></div></div>
         <div class="si-tokens">
           <div class="si-tok">Open Positions:<span>${zhype.open_positions_summary?.count ?? 0}</span></div>
           <div class="si-tok">Current Equity:<span>$${Number(zhype.equity_total || 0).toFixed(2)}</span></div>

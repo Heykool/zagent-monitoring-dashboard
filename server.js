@@ -2,7 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 
 const app = express();
 const HOST = process.env.HOST || '0.0.0.0';
@@ -11,6 +11,7 @@ const AGENTS_DIR = process.env.OPENCLAW_AGENTS_DIR || '/root/.openclaw/agents';
 const WORKSPACES_DIR = process.env.OPENCLAW_WORKSPACES_DIR || '/root/.openclaw';
 const INPUT_COST_PER_M = Number(process.env.INPUT_COST_PER_M || 0.5);
 const OUTPUT_COST_PER_M = Number(process.env.OUTPUT_COST_PER_M || 1.5);
+const lastRefreshAt = new Map();
 
 app.use((req,res,next)=>{res.setHeader('Cache-Control','no-store'); next();});
 app.use(express.static(path.join(__dirname, 'public')));
@@ -186,6 +187,34 @@ function parseAllAgents() {
     .map(parseAgent)
     .sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 }
+
+
+app.post('/api/refresh-trading', (req, res) => {
+  const agent = (req.query.agent || req.body?.agent || '').toString().trim();
+  if (!agent) return res.status(400).json({ error: 'agent is required' });
+  if (!['zpredictor','zhypetrader'].includes(agent)) return res.status(400).json({ error: 'unsupported agent' });
+
+  const now = Date.now();
+  const last = lastRefreshAt.get(agent) || 0;
+  const cooldownMs = 20000;
+  if (now - last < cooldownMs) {
+    return res.status(429).json({ error: 'cooldown', retryInSec: Math.ceil((cooldownMs - (now-last))/1000) });
+  }
+
+  let cmd = null;
+  if (agent === 'zpredictor') {
+    cmd = 'cd /root/.openclaw/workspace-zpredictor && AUTO_EXECUTE=false python3 reports/generate_comprehensive_report.py';
+  } else if (agent === 'zhypetrader') {
+    cmd = 'cd /root/.openclaw/workspace-zhypetrader && python3 reports/generate_hype_dashboard_report.py';
+  }
+
+  const r = spawnSync('/usr/bin/bash', ['-lc', cmd], { encoding: 'utf8', timeout: 120000 });
+  if (r.status !== 0) {
+    return res.status(500).json({ ok: false, status: r.status, stderr: (r.stderr || '').slice(0, 800), stdout: (r.stdout || '').slice(0, 800) });
+  }
+  lastRefreshAt.set(agent, now);
+  return res.json({ ok: true, agent, refreshedAt: now, stdout: (r.stdout || '').trim().slice(0, 500) });
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
