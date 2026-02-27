@@ -900,6 +900,7 @@ async function openDrawer(agentId){
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Confirm</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Combined</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Tradeable</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Fail Flags</th>
             </tr></thead>
             <tbody>
               ${(zoption.decision_report?.signals||[]).map(sig=>`<tr>
@@ -910,6 +911,12 @@ async function openDrawer(agentId){
                 <td style="padding:6px;text-align:right">${Number(sig.confirm_score||0).toFixed(0)}</td>
                 <td style="padding:6px;text-align:right">${Number(sig.combined_score||0).toFixed(0)}</td>
                 <td style="padding:6px;color:${sig.is_tradeable?'#26d07c':'#ff4d6a'}">${sig.is_tradeable?'YES':'NO'}</td>
+                <td style="padding:6px;font-size:.68rem;color:#9fb3d9">${[
+                  sig.debug?.failed_structure ? 'structure' : null,
+                  sig.debug?.failed_confirmation_threshold ? 'confirm<thr' : null,
+                  sig.debug?.failed_tf_count ? 'tf<count' : null,
+                  sig.debug?.failed_direction_alignment ? 'dir-mismatch' : null,
+                ].filter(Boolean).join(' | ') || '-'}</td>
               </tr>`).join('')}
             </tbody>
           </table>
@@ -995,6 +1002,7 @@ async function openDrawer(agentId){
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Confirm</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Combined</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Tradeable</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Fail Flags</th>
             </tr></thead>
             <tbody>
               ${(zoption.decision_report?.signals||[]).map(sig=>`<tr>
@@ -1005,6 +1013,12 @@ async function openDrawer(agentId){
                 <td style="padding:6px;text-align:right">${Number(sig.confirm_score||0).toFixed(0)}</td>
                 <td style="padding:6px;text-align:right">${Number(sig.combined_score||0).toFixed(0)}</td>
                 <td style="padding:6px;color:${sig.is_tradeable?'#26d07c':'#ff4d6a'}">${sig.is_tradeable?'YES':'NO'}</td>
+                <td style="padding:6px;font-size:.68rem;color:#9fb3d9">${[
+                  sig.debug?.failed_structure ? 'structure' : null,
+                  sig.debug?.failed_confirmation_threshold ? 'confirm<thr' : null,
+                  sig.debug?.failed_tf_count ? 'tf<count' : null,
+                  sig.debug?.failed_direction_alignment ? 'dir-mismatch' : null,
+                ].filter(Boolean).join(' | ') || '-'}</td>
               </tr>`).join('')}
             </tbody>
           </table>
