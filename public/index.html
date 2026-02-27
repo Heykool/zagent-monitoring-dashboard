@@ -835,6 +835,7 @@ async function openDrawer(agentId){
           <table style="width:100%;font-size:.72rem;border-collapse:collapse">
             <thead><tr>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Closed</th>
+              <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Result</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Symbol</th>
               <th style="text-align:left;padding:6px;border-bottom:1px solid #2a3347">Side</th>
               <th style="text-align:right;padding:6px;border-bottom:1px solid #2a3347">Entry</th>
@@ -847,10 +848,11 @@ async function openDrawer(agentId){
             <tbody>
               ${(predictor.closed_trades_today||[]).slice(0,20).map(c=>`<tr>
                 <td style="padding:6px">${esc(c.closed_at||'')}</td>
+                <td style="padding:6px;color:${c.result==='WON'?'#26d07c':'#ff4d6a'}">${esc(c.result||'')}</td>
                 <td style="padding:6px">${esc(c.symbol||'?')}</td>
                 <td style="padding:6px">${esc(c.side||'')}</td>
                 <td style="padding:6px;text-align:right">$${Number(c.entry_cost||0).toFixed(2)}</td>
-                <td style="padding:6px;text-align:right;color:${Number(c.realized_pnl_est||0)>=0?'#26d07c':'#ff4d6a'}">$${Number(c.realized_pnl_est||0).toFixed(2)}</td>
+                <td style="padding:6px;text-align:right;color:${(c.result==='LOST'||Number(c.realized_pnl_est||0)<0)?'#ff4d6a':'#26d07c'}">$${Number(c.realized_pnl_est||0).toFixed(2)}</td>
                 <td style="padding:6px;text-align:right">${(Number(c.roi_est||0)*100).toFixed(2)}%</td>
                 <td style="padding:6px">${esc(c.opened_at||'')}</td>
                 <td style="padding:6px">${c.order_ref?`<a href="https://basescan.org/search?f=0&q=${encodeURIComponent(c.order_ref)}" target="_blank" style="color:var(--cyan)">${esc(String(c.order_ref).slice(0,10))}…</a>`:'n/a'}</td>
