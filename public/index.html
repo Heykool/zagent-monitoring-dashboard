@@ -715,6 +715,8 @@ async function openDrawer(agentId){
   const zhype = a.zhypeReport || null;
   const zoption = a.zoptionReport || null;
   const memfw = a.memoryFramework || null;
+  const actions = a.actions || [];
+  const isTradingAgent = ['zpredictor','zhypetrader','zoption1mintrader'].includes(a.id);
 
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
@@ -727,11 +729,12 @@ async function openDrawer(agentId){
     <!-- Tab buttons -->
     <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
       <button onclick="showDrawerTab('sessions')" class="tab-btn active" id="tab-btn-sessions">Sessions</button>
+      <button onclick="showDrawerTab('activity')" class="tab-btn" id="tab-btn-activity">Activity Log</button>
       <button onclick="showDrawerTab('memory')" class="tab-btn" id="tab-btn-memory">Memory</button>
       <button onclick="showDrawerTab('skill')" class="tab-btn" id="tab-btn-skill">SKILL.md</button>
       <button onclick="showDrawerTab('soul')" class="tab-btn" id="tab-btn-soul">SOUL.md</button>
       <button onclick="showDrawerTab('agents')" class="tab-btn" id="tab-btn-agents">AGENTS.md</button>
-      <button onclick="showDrawerTab('trading')" class="tab-btn" id="tab-btn-trading">Trading</button>
+      ${isTradingAgent ? `<button onclick="showDrawerTab('trading')" class="tab-btn" id="tab-btn-trading">Trading</button>` : ''}
     </div>
     
     <!-- Sessions Tab -->
@@ -756,6 +759,22 @@ async function openDrawer(agentId){
       `).join('') : '<div class="empty">No sessions</div>'}
     </div>
     
+    <!-- Activity Tab -->
+    <div id="drawer-tab-activity" class="hidden">
+      <div style="font-size:.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);margin-bottom:12px;">
+        Latest 30 actions
+      </div>
+      ${actions.length ? actions.map(act => `
+        <div class="session-item">
+          <div class="si-head">
+            <div class="si-id">${esc(act.role || 'unknown')} · ${esc((act.sessionId || '').slice(0, 12))}…</div>
+            <div class="si-time">${fmtDateTime(act.ts)}</div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-hi);line-height:1.45;word-break:break-word;">${esc(act.summary || '')}</div>
+        </div>
+      `).join('') : '<div class="empty">No recent actions</div>'}
+    </div>
+
     <!-- Memory Tab -->
     <div id="drawer-tab-memory" class="hidden">
       <div class="session-item" style="margin-bottom:10px;">
@@ -793,7 +812,7 @@ async function openDrawer(agentId){
     </div>
 
     <!-- Trading Tab -->
-    <div id="drawer-tab-trading" class="hidden">
+    ${isTradingAgent ? `<div id="drawer-tab-trading" class="hidden">
       ${predictor ? `
       <div class="session-item">
         <div class="si-head"><div class="si-id">ZPredictor Trading Summary</div><div class="si-time">${fmtDateTime(predictor.generated_at)} <button onclick="refreshTradingNow('zpredictor')" style="margin-left:8px;background:#24304a;color:#cfe1ff;border:1px solid #3b4f77;border-radius:6px;padding:2px 8px;cursor:pointer">Refresh Live Now</button></div></div>
@@ -1047,7 +1066,7 @@ async function openDrawer(agentId){
         </div>
       </div>
       ` : '<div class="empty">No trading report available yet.</div>'))}
-    </div>
+    </div>` : ''}
   `;
 
   document.getElementById('drawer-overlay').classList.add('open');
@@ -1056,7 +1075,7 @@ async function openDrawer(agentId){
 
 function showDrawerTab(tabName) {
   // Hide all tabs
-  ['sessions','memory','skill','soul','agents','trading'].forEach(t => {
+  ['sessions','activity','memory','skill','soul','agents','trading'].forEach(t => {
     document.getElementById('drawer-tab-'+t)?.classList.add('hidden');
     document.getElementById('tab-btn-'+t)?.classList.remove('active');
   });

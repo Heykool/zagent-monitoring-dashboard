@@ -80,8 +80,71 @@ function getMemoryFiles(agentId, limit = 12) {
     .map((x) => ({ file: x.file, mtime: x.mtime, content: readText(x.p, '') })); // full text
 }
 
+function tailLines(filePath, lines = 120) {
+  try {
+    return execSync(`tail -n ${Number(lines)} ${JSON.stringify(filePath)}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return '';
+  }
+}
 
+function compact(s, max = 160) {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+}
 
+function summarizeContent(content) {
+  if (!Array.isArray(content) || !content.length) return '';
+
+  const textPart = content.find((c) => c?.type === 'text' && c?.text);
+  if (textPart?.text) return compact(textPart.text, 180);
+
+  const toolPart = content.find((c) => c?.type === 'toolCall' && c?.name);
+  if (toolPart?.name) return `tool:${toolPart.name}`;
+
+  const toolResultPart = content.find((c) => c?.type === 'toolResult' && c?.toolName);
+  if (toolResultPart?.toolName) return `toolResult:${toolResultPart.toolName}`;
+
+  return compact(JSON.stringify(content[0] || ''), 180);
+}
+
+function getAgentActions(agentId, sessionsMap, limit = 30) {
+  const actions = [];
+  const entries = Object.values(sessionsMap || {}).slice(0, 40);
+
+  for (const s of entries) {
+    const sessionId = s?.sessionId;
+    const sessionFile = s?.sessionFile;
+    if (!sessionId || !sessionFile || !fs.existsSync(sessionFile)) continue;
+
+    const raw = tailLines(sessionFile, 120);
+    if (!raw) continue;
+
+    const lines = raw.split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj?.type !== 'message') continue;
+        const msg = obj?.message || {};
+        const role = msg?.role || 'unknown';
+        const ts = obj?.timestamp || null;
+        const summary = summarizeContent(msg?.content);
+        if (!summary) continue;
+        actions.push({
+          ts,
+          role,
+          sessionId,
+          summary,
+        });
+      } catch {}
+    }
+  }
+
+  return actions
+    .filter((a) => !!a.ts)
+    .sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
+    .slice(0, limit);
+}
 
 function getZoptionReport(agentId) {
   if (agentId !== 'zoption1mintrader') return null;
@@ -160,6 +223,7 @@ function parseAgent(agentId) {
 
   const totalTokens = totalInputTokens + totalOutputTokens;
   const estimatedCost = ((totalInputTokens / 1_000_000) * INPUT_COST_PER_M) + ((totalOutputTokens / 1_000_000) * OUTPUT_COST_PER_M);
+  const actions = getAgentActions(agentId, sessionsMap, 30);
 
   return {
     id: agentId,
@@ -174,6 +238,7 @@ function parseAgent(agentId) {
     estimatedCost,
     lastActivity: lastActivity || null,
     sessions,
+    actions,
     memory: getMemoryFiles(agentId, 12), // full content
     predictorReport: getPredictorReport(agentId),
     zhypeReport: getZhypeReport(agentId),
