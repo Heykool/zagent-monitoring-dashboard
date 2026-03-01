@@ -715,6 +715,7 @@ async function openDrawer(agentId){
   const zhype = a.zhypeReport || null;
   const zoption = a.zoptionReport || null;
   const memfw = a.memoryFramework || null;
+  const memFlow = a.memoryFlow || null;
   const actions = a.actions || [];
   const isTradingAgent = ['zpredictor','zhypetrader','zoption1mintrader'].includes(a.id);
 
@@ -787,6 +788,23 @@ async function openDrawer(agentId){
         </div>
       </div>
 
+      ${memFlow ? `<div class="session-item" style="margin-bottom:10px;background:linear-gradient(135deg,#1a2235,#0f1525);border:1px solid #00d4ff33;">
+        <div class="si-head"><div class="si-id" style="color:var(--cyan)">Memory Flow Diagram</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <div class="si-tok">Input:<span>${memFlow.flow?.input || 'N/A'}</span></div>
+          <div class="si-tok">Output:<span>${memFlow.flow?.output || 'N/A'}</span></div>
+          <div class="si-tok">Files:<span>${memFlow.usage?.files || 0}</span></div>
+          <div class="si-tok">Size:<span>${memFlow.usage?.sizeHuman || '0 MB'}</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:.72rem;"><strong style="color:var(--amber)">Stores:</strong></div>
+        ${memFlow.flow?.stores?.map(s=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a3347;font-size:.72rem;"><span style="color:var(--cyan)">${s.name}</span><span>${s.type} | ${s.retention || s.tier || s.syncInterval || 'N/A'}</span></div>`).join('') || ''}
+        <div style="margin-top:10px;font-size:.72rem;"><strong style="color:var(--green)">Efficiency:</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div class="si-tok">Max Tokens:<span>${memFlow.config?.efficiency?.maxTokens || 'N/A'}</span></div>
+          <div class="si-tok">Recall:<span>${memFlow.config?.efficiency?.recallSpeed || 'N/A'}</span></div>
+          <div class="si-tok">Storage:<span>${memFlow.config?.efficiency?.storageLimit || 'N/A'}</span></div>
+        </div>
+      </div>` : ''}
 
       ${memoryFiles.length ? memoryFiles.map(m => `
         <div class="session-item">
