@@ -263,6 +263,218 @@
           "url": "https://github.com/Heykool/agent-health-monitor"
         }
       ]
+    },
+    {
+      "id": "predictor-algorithm-enhancement",
+      "title": "Predictor Algorithm Enhancement (continuous 1-min scanner)",
+      "status": "in_progress",
+      "assignees": [
+        "ZJuniorCoder",
+        "ZSeniorCoder"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Enhance zpredictor scanner/daemon for continuous 1-minute scanning and execution-ready signal flow.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Continuous 1-min scan loop",
+          "status": "in_progress"
+        },
+        {
+          "title": "Signal quality tuning",
+          "status": "in_progress"
+        }
+      ],
+      "links": [
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/agent-zpredictor"
+        }
+      ]
+    },
+    {
+      "id": "hypetrader-scanner-fix",
+      "title": "HypeTrader Scanner Fix",
+      "status": "in_progress",
+      "assignees": [
+        "ZJuniorCoder"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Fix scanner reliability and coverage for zhypetrader market detection pipeline.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Diagnose scanner misses",
+          "status": "in_progress"
+        },
+        {
+          "title": "Patch + verify",
+          "status": "backlog"
+        }
+      ],
+      "links": [
+        {
+          "label": "Workspace",
+          "url": "#",
+          "path": "/root/.openclaw/workspace-zjuniorcoder/hyperliquid-trader"
+        }
+      ]
+    },
+    {
+      "id": "crypto-analysis-dashboard-standalone",
+      "title": "Crypto Analysis Dashboard (new standalone)",
+      "status": "in_progress",
+      "assignees": [
+        "ZJuniorCoder",
+        "ZSeniorCoder"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Standalone dashboard for ZCryptoAnalyst with redesigned v2 UI, chart integration, and live token metrics.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "V2 redesign implementation",
+          "status": "done"
+        },
+        {
+          "title": "Chart resolver hardening",
+          "status": "in_progress"
+        },
+        {
+          "title": "Stakeholder signoff pass",
+          "status": "in_progress"
+        }
+      ],
+      "links": [
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/crypto-analyst-dashboard"
+        }
+      ]
+    },
+    {
+      "id": "dashboard-kanban-enhancement",
+      "title": "Dashboard Kanban Enhancement (agent watcher)",
+      "status": "in_progress",
+      "assignees": [
+        "ZJuniorCoder"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Enhance Agent Watch dashboard task board so all active team tasks are visible and trackable.",
+      "decisions": [
+        {
+          "date": "2026-03-04",
+          "decision": "Use tasks.json as source of truth",
+          "reason": "Fastest path for full board visibility"
+        }
+      ],
+      "subtasks": [
+        {
+          "title": "Map required task list from YehYeh",
+          "status": "done"
+        },
+        {
+          "title": "Register missing tasks in data source",
+          "status": "done"
+        },
+        {
+          "title": "Verify /api/tasks output",
+          "status": "in_progress"
+        }
+      ],
+      "links": [
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/agent-watch-dashboard"
+        }
+      ]
+    },
+    {
+      "id": "limitless-exchange-research",
+      "title": "Limitless Exchange Research",
+      "status": "in_progress",
+      "assignees": [
+        "ZSeniorResearcher"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Research Limitless markets, endpoints, and execution constraints for predictor strategy quality.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Market/data API mapping",
+          "status": "in_progress"
+        },
+        {
+          "title": "Execution path recommendations",
+          "status": "backlog"
+        }
+      ],
+      "links": [
+        {
+          "label": "SDK workspace",
+          "url": "#",
+          "path": "/root/.openclaw/workspace-zjuniorcoder/limitless-exchange-ts-sdk"
+        }
+      ]
+    },
+    {
+      "id": "api-mega-list-review",
+      "title": "API Mega List Review",
+      "status": "in_progress",
+      "assignees": [
+        "ZSeniorResearcher",
+        "ZJuniorCoder"
+      ],
+      "date_assigned": "2026-03-04",
+      "date_completed": null,
+      "description": "Review and prioritize large candidate API list for trading/research integrations.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Categorize by use-case",
+          "status": "in_progress"
+        },
+        {
+          "title": "Rank by reliability/cost",
+          "status": "backlog"
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": "crypto-analyst-agent-blueprint",
+      "title": "Crypto Analyst Agent Blueprint (completed)",
+      "status": "done",
+      "assignees": [
+        "ZSeniorCoder",
+        "ZJuniorCoder"
+      ],
+      "date_assigned": "2026-03-03",
+      "date_completed": "2026-03-04",
+      "description": "Blueprint/specification for ZCryptoAnalyst agent responsibilities, data flow, and dashboard requirements.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Blueprint draft",
+          "status": "done"
+        },
+        {
+          "title": "Review and approval",
+          "status": "done"
+        }
+      ],
+      "links": [
+        {
+          "label": "Specs directory",
+          "url": "#",
+          "path": "/root/.openclaw/shared-dev/specs"
+        }
+      ]
     }
   ]
 }
