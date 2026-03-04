@@ -200,11 +200,20 @@ app.get('/api/memory-flow', (_req, res) => { const flows = {}; for (const agentI
 
 app.get('/api/memory-flow/:id', (req, res) => { const flow = getMemoryFlow(req.params.id); if (!flow) return res.status(404).json({ error: 'No memory config for agent' }); res.json(flow); });
 
+let _overviewCache = null, _overviewCacheAt = 0;
+const OVERVIEW_CACHE_TTL = 30000;
+
 app.get('/api/overview', (_req, res) => {
+  const now = Date.now();
+  if (_overviewCache && (now - _overviewCacheAt) < OVERVIEW_CACHE_TTL) {
+    return res.json({ ..._overviewCache, timestamp: new Date().toISOString(), cached: true });
+  }
   const fullAgents = parseAllAgents();
   const summary = { agentCount: fullAgents.length, activeAgents: fullAgents.filter((a) => a.status === 'active').length, totalSessions: fullAgents.reduce((s, a) => s + a.sessionCount, 0), totalActiveSessions: fullAgents.reduce((s, a) => s + a.activeSessions, 0), totalTokens: fullAgents.reduce((s, a) => s + a.totalTokens, 0), totalInputTokens: fullAgents.reduce((s, a) => s + a.totalInputTokens, 0), totalOutputTokens: fullAgents.reduce((s, a) => s + a.totalOutputTokens, 0), estimatedCostUSD: fullAgents.reduce((s, a) => s + (a.estimatedCost || 0), 0) };
   const agents = fullAgents.map((a) => ({ id: a.id, name: a.name, description: a.description, status: a.status, sessionCount: a.sessionCount, activeSessions: a.activeSessions, totalInputTokens: a.totalInputTokens, totalOutputTokens: a.totalOutputTokens, totalTokens: a.totalTokens, estimatedCost: a.estimatedCost, lastActivity: a.lastActivity, memoryFlow: a.memoryFlow, predictorReport: a.id === 'zpredictor' ? a.predictorReport : null, zhypeReport: a.id === 'zhypetrader' ? a.zhypeReport : null, zoptionReport: a.id === 'zoption1mintrader' ? a.zoptionReport : null, memoryFramework: a.memoryFramework, sessions: (a.sessions || []).slice(0, 3) }));
-  res.json({ timestamp: new Date().toISOString(), summary, gateway: getGateway(), host: getHost(), agents });
+  const result = { summary, gateway: getGateway(), host: getHost(), agents };
+  _overviewCache = result; _overviewCacheAt = Date.now();
+  res.json({ ...result, timestamp: new Date().toISOString(), cached: false });
 });
 
 app.get('/api/agents/:id', (req, res) => { const agent = parseAgent(req.params.id); if (!agent) return res.status(404).json({ error: 'Agent not found' }); res.json(agent); });
