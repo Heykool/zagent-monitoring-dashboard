@@ -23,6 +23,7 @@ app = Flask(__name__)
 # Configuration
 AGENTS_DIR = "/root/.openclaw/agents"
 WORKSPACE_DIR = "/root/.openclaw/workspace"
+TASKS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tasks.json")
 
 # Agent memory configurations
 AGENT_MEMORY_CONFIG = {
@@ -323,6 +324,12 @@ DASHBOARD_HTML = """
         }
         .memory-flow-card { transition: all 0.3s; }
         .memory-flow-card:hover { box-shadow: 0 4px 20px rgba(79, 70, 229, 0.3); }
+        .kanban-col { min-height: 220px; }
+        .task-card { transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: pointer; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+        .modal-backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+        .modal-panel { animation: modalIn 0.16s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(0.98);} to { opacity: 1; transform: translateY(0) scale(1);} }
         @media (max-width: 768px) {
             .grid-cols-3 { grid-template-columns: 1fr; }
             .grid-cols-4 { grid-template-columns: 1fr 1fr; }
@@ -338,8 +345,10 @@ DASHBOARD_HTML = """
                     <i class="fa-solid fa-robot text-2xl text-blue-400"></i>
                     <h1 class="text-xl font-bold">OpenClaw Dashboard</h1>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span id="gateway-status" class="text-sm">
+                <div class="flex items-center space-x-2 md:space-x-4">
+                    <button onclick="showSection('overview')" id="nav-overview" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm">Overview</button>
+                    <button onclick="showSection('tasks')" id="nav-tasks" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm">Tasks</button>
+                    <span id="gateway-status" class="text-sm hidden md:inline">
                         <i class="fa-solid fa-circle text-xs"></i> Gateway
                     </span>
                     <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm">
@@ -376,6 +385,7 @@ DASHBOARD_HTML = """
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-6">
+        <section id="overview-section">
         <h2 class="text-lg font-semibold mb-4">
             <i class="fa-solid fa-users mr-2"></i>Agents
         </h2>
@@ -555,6 +565,43 @@ DASHBOARD_HTML = """
             </div>
         </div>
         
+        </section>
+
+        <section id="tasks-section" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold"><i class="fa-solid fa-table-columns mr-2"></i>Tasks Kanban</h2>
+                <span class="text-xs text-gray-400">Backlog → In Progress → Review → Done</span>
+            </div>
+            <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div>
+        </section>
+
+        <div id="task-modal" class="hidden fixed inset-0 modal-backdrop z-50 items-center justify-center p-4">
+            <div class="modal-panel w-full max-w-3xl bg-gray-800 border border-gray-700 rounded-xl p-5 max-h-[85vh] overflow-y-auto">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h3 id="modal-title" class="text-xl font-bold"></h3>
+                        <div id="modal-meta" class="text-xs text-gray-400 mt-1"></div>
+                    </div>
+                    <button onclick="closeTaskModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <p id="modal-description" class="text-sm text-gray-200 mb-4"></p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">Subtasks</h4>
+                        <ul id="modal-subtasks" class="space-y-2 text-sm"></ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Decision Log</h4>
+                        <ul id="modal-decisions" class="space-y-2 text-sm"></ul>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">Links</h4>
+                    <ul id="modal-links" class="space-y-2 text-sm"></ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="mt-8 text-center text-gray-500 text-sm">
             <p>OpenClaw Agent Dashboard • Last updated: <span id="last-updated"></span></p>
@@ -573,6 +620,113 @@ DASHBOARD_HTML = """
         function refreshData() {
             location.reload();
         }
+
+        function showSection(section) {
+            const overview = document.getElementById('overview-section');
+            const tasks = document.getElementById('tasks-section');
+            const navOverview = document.getElementById('nav-overview');
+            const navTasks = document.getElementById('nav-tasks');
+            if (section === 'tasks') {
+                overview.classList.add('hidden');
+                tasks.classList.remove('hidden');
+                navTasks.classList.remove('bg-gray-700'); navTasks.classList.add('bg-blue-600');
+                navOverview.classList.remove('bg-blue-600'); navOverview.classList.add('bg-gray-700');
+                loadTasks();
+            } else {
+                tasks.classList.add('hidden');
+                overview.classList.remove('hidden');
+                navOverview.classList.remove('bg-gray-700'); navOverview.classList.add('bg-blue-600');
+                navTasks.classList.remove('bg-blue-600'); navTasks.classList.add('bg-gray-700');
+            }
+        }
+
+        function statusColor(status) {
+            const m = { backlog: 'border-l-gray-500', in_progress: 'border-l-blue-500', review: 'border-l-orange-500', done: 'border-l-green-500' };
+            return m[status] || 'border-l-gray-500';
+        }
+
+        function statusLabel(status) {
+            return ({ backlog:'Backlog', in_progress:'In Progress', review:'Review', done:'Done' }[status] || status);
+        }
+
+        function progress(subtasks) {
+            const total = (subtasks || []).length;
+            const done = (subtasks || []).filter(s => ['done','complete','completed'].includes((s.status || '').toLowerCase())).length;
+            return { done, total, pct: total ? Math.round((done/total)*100) : 0 };
+        }
+
+        async function loadTasks() {
+            const board = document.getElementById('kanban-board');
+            board.innerHTML = '<div class="text-gray-400">Loading tasks...</div>';
+            const res = await fetch('/api/tasks');
+            const data = await res.json();
+            const order = ['backlog', 'in_progress', 'review', 'done'];
+            board.innerHTML = '';
+            order.forEach(status => {
+                const tasks = data[status] || [];
+                const col = document.createElement('div');
+                col.className = 'kanban-col bg-gray-800 border border-gray-700 rounded-lg p-3';
+                col.innerHTML = `<div class="flex justify-between items-center mb-3"><h3 class="font-semibold">${statusLabel(status)}</h3><span class="text-xs px-2 py-0.5 rounded bg-gray-700">${tasks.length}</span></div>`;
+                tasks.forEach(t => {
+                    const p = progress(t.subtasks || []);
+                    const card = document.createElement('div');
+                    card.className = `task-card border-l-4 ${statusColor(status)} bg-gray-900 rounded p-3 mb-3`;
+                    card.onclick = () => openTaskModal(t.id);
+                    card.innerHTML = `
+                        <div class="font-semibold mb-1">${t.title}</div>
+                        <div class="text-xs text-gray-400 mb-1">${(t.assignees || []).join(', ') || 'Unassigned'}</div>
+                        <div class="text-xs text-gray-500 mb-2">Assigned: ${t.date_assigned || 'N/A'}</div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-gray-400">${(t.decisions || []).length} decisions</span><span>${p.done}/${p.total} complete</span></div>
+                        <div class="w-full bg-gray-700 rounded h-1.5"><div class="bg-blue-500 h-1.5 rounded" style="width:${p.pct}%"></div></div>
+                    `;
+                    col.appendChild(card);
+                });
+                board.appendChild(col);
+            });
+        }
+
+        async function openTaskModal(taskId) {
+            const res = await fetch(`/api/tasks/${taskId}`);
+            if (res.status !== 200) return;
+            const t = await res.json();
+            document.getElementById('modal-title').textContent = `${t.title} (${statusLabel(t.status)})`;
+            document.getElementById('modal-meta').textContent = `Assignees: ${(t.assignees || []).join(', ') || 'Unassigned'} • Assigned: ${t.date_assigned || 'N/A'}${t.date_completed ? ' • Completed: ' + t.date_completed : ''}`;
+            document.getElementById('modal-description').textContent = t.description || '';
+
+            const subtasks = document.getElementById('modal-subtasks'); subtasks.innerHTML = '';
+            (t.subtasks || []).forEach(s => {
+                const li = document.createElement('li');
+                li.className = 'text-gray-200';
+                li.innerHTML = `<span class="text-xs px-1.5 py-0.5 rounded bg-gray-700 mr-2">${s.status || 'todo'}</span>${s.title || ''}`;
+                subtasks.appendChild(li);
+            });
+
+            const decisions = document.getElementById('modal-decisions'); decisions.innerHTML = '';
+            (t.decisions || []).forEach(d => {
+                const li = document.createElement('li');
+                li.className = 'text-gray-200';
+                li.innerHTML = `<div class="text-xs text-gray-400">${d.date || ''}</div><div>${d.decision || ''}</div><div class="text-xs text-gray-500">${d.reason || ''}</div>`;
+                decisions.appendChild(li);
+            });
+
+            const links = document.getElementById('modal-links'); links.innerHTML = '';
+            (t.links || []).forEach(l => {
+                const li = document.createElement('li');
+                const href = l.url && l.url !== '#' ? l.url : (l.path || '#');
+                li.innerHTML = `<a class="text-blue-400 hover:underline" href="${href}" target="_blank">${l.label || href}</a>${l.path ? `<span class="text-xs text-gray-500"> (${l.path})</span>` : ''}`;
+                links.appendChild(li);
+            });
+
+            const modal = document.getElementById('task-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeTaskModal() {
+            const modal = document.getElementById('task-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
         
         function testApis() {
             fetch('/api/agents')
@@ -584,6 +738,9 @@ DASHBOARD_HTML = """
             fetch('/api/memory')
                 .then(r => r.json())
                 .then(d => console.log('Memory:', d));
+            fetch('/api/tasks')
+                .then(r => r.json())
+                .then(d => console.log('Tasks:', d));
             alert('Check console for API responses');
         }
         
@@ -608,6 +765,46 @@ DASHBOARD_HTML = """
 </body>
 </html>
 """
+
+
+def load_tasks():
+    """Load tasks from tasks.json with basic validation."""
+    if not os.path.exists(TASKS_FILE):
+        return []
+    try:
+        with open(TASKS_FILE, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except Exception:
+        return []
+
+    raw_tasks = payload.get("tasks", []) if isinstance(payload, dict) else []
+    valid = []
+    allowed_status = {"backlog", "in_progress", "review", "done"}
+    for t in raw_tasks:
+        if not isinstance(t, dict):
+            continue
+        if not t.get("id") or not t.get("title"):
+            continue
+        status = str(t.get("status", "backlog")).lower()
+        if status not in allowed_status:
+            status = "backlog"
+        item = {
+            "id": str(t.get("id")),
+            "title": str(t.get("title")),
+            "status": status,
+            "assignees": t.get("assignees", []) if isinstance(t.get("assignees", []), list) else [],
+            "date_assigned": t.get("date_assigned"),
+            "date_completed": t.get("date_completed"),
+            "description": t.get("description", ""),
+            "decisions": t.get("decisions", []) if isinstance(t.get("decisions", []), list) else [],
+            "subtasks": t.get("subtasks", []) if isinstance(t.get("subtasks", []), list) else [],
+            "links": t.get("links", []) if isinstance(t.get("links", []), list) else [],
+        }
+        valid.append(item)
+
+    valid.sort(key=lambda x: x.get("date_assigned") or "", reverse=True)
+    return valid
+
 
 
 def get_local_ip():
@@ -691,6 +888,24 @@ def api_memory_flow(agent_id):
         "agent_id": agent_id,
         "mermaid": generate_mermaid_flow(agent_id)
     })
+
+
+@app.route("/api/tasks")
+def api_tasks():
+    """Return all tasks grouped by status."""
+    grouped = {"backlog": [], "in_progress": [], "review": [], "done": []}
+    for t in load_tasks():
+        grouped[t["status"]].append(t)
+    return jsonify(grouped)
+
+
+@app.route("/api/tasks/<task_id>")
+def api_task_detail(task_id):
+    """Return single task with full details."""
+    for t in load_tasks():
+        if t["id"] == task_id:
+            return jsonify(t)
+    return jsonify({"error": "task not found", "task_id": task_id}), 404
 
 
 if __name__ == "__main__":

@@ -244,6 +244,28 @@ class TestFlaskApp(unittest.TestCase):
         response = self.client.get('/api/memory-flow/zjuniorcoder')
         self.assertEqual(response.status_code, 200)
 
+    def test_api_tasks_route(self):
+        """Test tasks API grouped response."""
+        response = self.client.get('/api/tasks')
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertIn('backlog', payload)
+        self.assertIn('in_progress', payload)
+        self.assertIn('review', payload)
+        self.assertIn('done', payload)
+
+    def test_api_task_detail_route(self):
+        """Test single task detail endpoint."""
+        response = self.client.get('/api/tasks/predictor-v2')
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload.get('id'), 'predictor-v2')
+
+    def test_api_task_detail_not_found(self):
+        """Test 404 for unknown task id."""
+        response = self.client.get('/api/tasks/not-real')
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
