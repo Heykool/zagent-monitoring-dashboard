@@ -218,6 +218,41 @@ header{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:16px;
 }
+.view-switch{display:flex;gap:8px;align-items:center;}
+.view-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:.72rem;font-family:var(--mono);transition:all .2s;}
+.view-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.view-btn.active{background:var(--cyan);border-color:var(--cyan);color:var(--bg);}
+
+#tasks-section{margin-bottom:28px;}
+.kanban-grid{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;}
+@media(max-width:1200px){.kanban-grid{grid-template-columns:repeat(2,minmax(240px,1fr));}}
+@media(max-width:700px){.kanban-grid{grid-template-columns:1fr;}}
+.kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:220px;}
+.kc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-family:var(--mono);font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.7px;}
+.kc-count{background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--text-hi);}
+.task-card{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.task-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.task-card.backlog{border-left-color:#6b7280;}
+.task-card.in_progress{border-left-color:var(--cyan);}
+.task-card.review{border-left-color:var(--amber);}
+.task-card.done{border-left-color:var(--green);}
+.tc-title{font-weight:600;color:var(--text-hi);font-size:.9rem;margin-bottom:5px;}
+.tc-meta,.tc-date{font-size:.72rem;color:var(--text-dim);}
+.tc-progress{margin-top:8px;}
+.tc-progress-row{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-dim);margin-bottom:4px;}
+.tc-bar{height:5px;background:var(--border);border-radius:999px;overflow:hidden;}
+.tc-fill{height:100%;background:var(--cyan);}
+
+#task-modal{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.72);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px;}
+#task-modal.open{display:flex;}
+#task-modal-panel{width:min(900px,95vw);max-height:86vh;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:18px;animation:fadeUp .2s ease;}
+.tm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.tm-close{background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);width:30px;height:30px;border-radius:6px;cursor:pointer;}
+.tm-close:hover{border-color:var(--red);color:var(--red);}
+.tm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;}
+@media(max-width:780px){.tm-grid{grid-template-columns:1fr;}}
+.tm-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.tm-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;}
 .section-title{
   font-size:.8rem;letter-spacing:.8px;text-transform:uppercase;
   color:var(--text-dim);font-family:var(--mono);
@@ -381,6 +416,10 @@ header{
       </div>
     </div>
     <div class="header-meta">
+      <div class="view-switch">
+        <button id="view-overview" class="view-btn active" onclick="switchView('overview')">Overview</button>
+        <button id="view-tasks" class="view-btn" onclick="switchView('tasks')">Tasks</button>
+      </div>
       <div id="gw-badge" class="badge badge-offline">GW OFFLINE</div>
       <div id="last-update">—</div>
       <div id="ar-ring" data-tip="Auto-refresh 15min" onclick="toggleAutoRefresh()">
@@ -393,6 +432,7 @@ header{
   <!-- Error -->
   <div id="error-box" class="error-box hidden"></div>
 
+  <div id="overview-view">
   <!-- Summary Cards -->
   <div class="summary-grid anim anim-delay-1" id="summary-grid">
     <div class="scard"><div class="scard-label">Total Agents</div><div class="scard-value" id="s-agents">—</div></div>
@@ -496,8 +536,47 @@ header{
       <div class="empty">Loading agents…</div>
     </div>
   </div>
+  </div>
+
+  <div id="tasks-view" class="hidden">
+    <div id="tasks-section" class="anim anim-delay-3">
+      <div class="section-head">
+        <div class="section-title">Task Kanban Board</div>
+      </div>
+      <div id="kanban-grid" class="kanban-grid">
+        <div class="empty">Loading tasks…</div>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /app -->
+
+<div id="task-modal" onclick="if(event.target.id==='task-modal') closeTaskModal()">
+  <div id="task-modal-panel">
+    <div class="tm-head">
+      <div>
+        <div id="tm-title" style="font-size:1rem;color:var(--text-hi);font-weight:700;"></div>
+        <div id="tm-meta" style="font-size:.72rem;color:var(--text-dim);margin-top:3px"></div>
+      </div>
+      <button class="tm-close" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div id="tm-desc" style="font-size:.82rem;color:var(--text);line-height:1.6"></div>
+    <div class="tm-grid">
+      <div>
+        <div class="section-title" style="margin-bottom:8px">Subtasks</div>
+        <ul id="tm-subtasks" class="tm-list"></ul>
+      </div>
+      <div>
+        <div class="section-title" style="margin-bottom:8px">Decision Log</div>
+        <ul id="tm-decisions" class="tm-list"></ul>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="section-title" style="margin-bottom:8px">Links</div>
+      <ul id="tm-links" class="tm-list"></ul>
+    </div>
+  </div>
+</div>
 
 <!-- Drawer Overlay -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
@@ -515,6 +594,8 @@ header{
 <script>
 // ─── State ──────────────────────────────────────────────────────────
 let allAgents = [];
+let allTasks = { backlog: [], in_progress: [], review: [], done: [] };
+let currentView = 'overview';
 let arTimer = null;
 let arActive = true;
 const AR_INTERVAL = 900000; // 15 minutes
@@ -1106,7 +1187,84 @@ function closeDrawer(){
   document.getElementById('drawer-overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
 }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrawer(); });
+
+function switchView(view){
+  currentView = view;
+  const ov = document.getElementById('overview-view');
+  const tv = document.getElementById('tasks-view');
+  const bov = document.getElementById('view-overview');
+  const btv = document.getElementById('view-tasks');
+  if(view === 'tasks'){
+    ov.classList.add('hidden'); tv.classList.remove('hidden');
+    bov.classList.remove('active'); btv.classList.add('active');
+    renderTasks(allTasks);
+  } else {
+    tv.classList.add('hidden'); ov.classList.remove('hidden');
+    btv.classList.remove('active'); bov.classList.add('active');
+  }
+}
+
+function statusLabel(s){ return ({backlog:'Backlog', in_progress:'In Progress', review:'Review', done:'Done'})[s] || s; }
+function subtaskProgress(subtasks){
+  const list = Array.isArray(subtasks) ? subtasks : [];
+  const done = list.filter(x => ['done','complete','completed'].includes(String(x?.status||'').toLowerCase())).length;
+  const total = list.length;
+  return { done, total, pct: total ? Math.round(done*100/total) : 0 };
+}
+
+function renderTasks(grouped){
+  const grid = document.getElementById('kanban-grid');
+  if(!grid) return;
+  const order = ['backlog','in_progress','review','done'];
+  const cols = order.map((k)=>{
+    const tasks = grouped?.[k] || [];
+    const cards = tasks.map(t=>{
+      const p = subtaskProgress(t.subtasks);
+      return `<div class="task-card ${k}" onclick="openTaskModal('${esc(t.id)}')">
+        <div class="tc-title">${esc(t.title)}</div>
+        <div class="tc-meta">${(t.assignees||[]).length ? esc(t.assignees.join(', ')) : 'Unassigned'}</div>
+        <div class="tc-date">Assigned: ${esc(t.date_assigned||'—')} · ${(t.decisions||[]).length} decisions</div>
+        <div class="tc-progress">
+          <div class="tc-progress-row"><span>Progress</span><span>${p.done}/${p.total}</span></div>
+          <div class="tc-bar"><div class="tc-fill" style="width:${p.pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('') || '<div class="empty" style="padding:14px 0">No tasks</div>';
+    return `<div class="kanban-col"><div class="kc-head"><span>${statusLabel(k)}</span><span class="kc-count">${tasks.length}</span></div>${cards}</div>`;
+  }).join('');
+  grid.innerHTML = cols;
+}
+
+async function loadTasks(){
+  try{
+    const res = await fetch('/api/tasks');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    allTasks = await res.json();
+    if(currentView==='tasks') renderTasks(allTasks);
+  } catch(_e){
+    const grid = document.getElementById('kanban-grid');
+    if(grid) grid.innerHTML = '<div class="error-box">Failed to load tasks</div>';
+  }
+}
+
+async function openTaskModal(taskId){
+  const r = await fetch('/api/tasks/' + encodeURIComponent(taskId));
+  if(!r.ok) return;
+  const t = await r.json();
+  document.getElementById('tm-title').textContent = `${t.title} (${statusLabel(t.status)})`;
+  document.getElementById('tm-meta').textContent = `Assignees: ${(t.assignees||[]).join(', ') || 'Unassigned'} • Assigned: ${t.date_assigned||'—'}${t.date_completed ? ' • Completed: '+t.date_completed : ''}`;
+  document.getElementById('tm-desc').textContent = t.description || '';
+  document.getElementById('tm-subtasks').innerHTML = (t.subtasks||[]).map(s => `<li class="tm-item"><strong>${esc(s.title||'')}</strong><div style="font-size:.7rem;color:var(--text-dim)">${esc(s.status||'todo')}</div></li>`).join('') || '<li class="tm-item">No subtasks</li>';
+  document.getElementById('tm-decisions').innerHTML = (t.decisions||[]).map(d => `<li class="tm-item"><div style="font-size:.68rem;color:var(--text-dim)">${esc(d.date||'')}</div><div>${esc(d.decision||'')}</div><div style="font-size:.68rem;color:var(--text-dim)">${esc(d.reason||'')}</div></li>`).join('') || '<li class="tm-item">No decisions logged</li>';
+  document.getElementById('tm-links').innerHTML = (t.links||[]).map(l => {
+    const href = (l.url && l.url !== '#') ? l.url : (l.path || '#');
+    return `<li class="tm-item"><a href="${esc(href)}" target="_blank">${esc(l.label||href)}</a>${l.path ? `<div style="font-size:.68rem;color:var(--text-dim)">${esc(l.path)}</div>` : ''}</li>`;
+  }).join('') || '<li class="tm-item">No links</li>';
+  document.getElementById('task-modal').classList.add('open');
+}
+function closeTaskModal(){ document.getElementById('task-modal').classList.remove('open'); }
+
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeDrawer(); closeTaskModal(); } });
 
 // ─── Data loading ─────────────────────────────────────────────────────
 async function loadData(){
@@ -1122,6 +1280,7 @@ async function loadData(){
     renderGateway(data.gateway||{status:'offline'});
     renderTokens(data.summary);
     renderAgents(data.agents||[]);
+    await loadTasks();
   } catch(e){
     const eb = document.getElementById('error-box');
     eb.textContent = '⚠ Failed to load data: '+e.message;

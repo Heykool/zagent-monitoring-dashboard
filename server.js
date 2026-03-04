@@ -19,6 +19,33 @@ app.use(express.json());
 
 const readJson = (p, fb = null) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return fb; } };
 const readText = (p, fb = '') => { try { return fs.readFileSync(p, 'utf8'); } catch { return fb; } };
+const TASKS_FILE = path.join(__dirname, 'tasks.json');
+
+function loadTasks() {
+  const payload = readJson(TASKS_FILE, { tasks: [] });
+  const list = Array.isArray(payload?.tasks) ? payload.tasks : [];
+  const allowed = new Set(['backlog', 'in_progress', 'review', 'done']);
+  const norm = [];
+  for (const t of list) {
+    if (!t || typeof t !== 'object') continue;
+    if (!t.id || !t.title) continue;
+    const status = allowed.has(String(t.status || '').toLowerCase()) ? String(t.status).toLowerCase() : 'backlog';
+    norm.push({
+      id: String(t.id),
+      title: String(t.title),
+      status,
+      assignees: Array.isArray(t.assignees) ? t.assignees : [],
+      date_assigned: t.date_assigned || null,
+      date_completed: t.date_completed || null,
+      description: t.description || '',
+      decisions: Array.isArray(t.decisions) ? t.decisions : [],
+      subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
+      links: Array.isArray(t.links) ? t.links : [],
+    });
+  }
+  norm.sort((a, b) => String(b.date_assigned || '').localeCompare(String(a.date_assigned || '')));
+  return norm;
+}
 
 function getGateway() {
   try {
@@ -181,5 +208,17 @@ app.get('/api/overview', (_req, res) => {
 });
 
 app.get('/api/agents/:id', (req, res) => { const agent = parseAgent(req.params.id); if (!agent) return res.status(404).json({ error: 'Agent not found' }); res.json(agent); });
+
+app.get('/api/tasks', (_req, res) => {
+  const grouped = { backlog: [], in_progress: [], review: [], done: [] };
+  for (const t of loadTasks()) grouped[t.status].push(t);
+  res.json(grouped);
+});
+
+app.get('/api/tasks/:id', (req, res) => {
+  const task = loadTasks().find((t) => t.id === req.params.id);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  res.json(task);
+});
 
 app.listen(PORT, HOST, () => { console.log(`Agent Watch Dashboard running on http://${HOST}:${PORT}`); });
