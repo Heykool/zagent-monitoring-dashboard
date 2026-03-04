@@ -2,44 +2,106 @@
   "tasks": [
     {
       "id": "predictor-v2",
-      "title": "Predictor V2 — Daemon + Auto-Execution",
+      "title": "Predictor V2 \u2014 Daemon + Auto-Execution",
       "status": "done",
-      "assignees": ["ZJuniorCoder", "ZSeniorCoder"],
+      "assignees": [
+        "ZJuniorCoder",
+        "ZSeniorCoder"
+      ],
       "date_assigned": "2026-03-04",
       "date_completed": "2026-03-04",
-      "description": "Upgrade ZPredictor from periodic cron execution to continuous daemon with signal pipeline, execution path, and risk checks.",
+      "description": "Status: LIVE daemon is running every 60s on zpredictor and successfully detects Limitless signals. Current constraint: no real trade execution yet because available wallet collateral is too low for meaningful position sizing. Outcome so far: operational pipeline validated (scanner\u2192signal\u2192risk\u2192execution path), but PnL remains flat until funded execution starts.",
       "decisions": [
-        {"date": "2026-03-04", "decision": "Phase 4 ML deprioritized", "reason": "52.1% accuracy below deployment bar"},
-        {"date": "2026-03-04", "decision": "Focus on production hardening", "reason": "Live execution reliability is higher impact"}
+        {
+          "date": "2026-03-04",
+          "decision": "Keep daemon live in monitor-first mode",
+          "reason": "Execution wiring is stable and gives real-time visibility while collateral is constrained"
+        },
+        {
+          "date": "2026-03-04",
+          "decision": "Do not deploy LightGBM overlay",
+          "reason": "Model result 52.1% accuracy (~0.533 AUC) is not above deployment bar and behaves like coin flip"
+        },
+        {
+          "date": "2026-03-04",
+          "decision": "Prioritize production hardening over feature expansion",
+          "reason": "Reliability + observability are higher leverage than adding weak-signal ML"
+        }
       ],
       "subtasks": [
-        {"title": "Phase 1 scaffold/refactor", "status": "done"},
-        {"title": "Phase 2 signal pipeline", "status": "done"},
-        {"title": "Phase 3 auto-execution + risk", "status": "done"},
-        {"title": "Phase 4 LightGBM", "status": "deprioritized"}
+        {
+          "title": "Phase 1 scaffold/refactor",
+          "status": "done"
+        },
+        {
+          "title": "Phase 2 signal pipeline",
+          "status": "done"
+        },
+        {
+          "title": "Phase 3 execution + risk integration",
+          "status": "done"
+        },
+        {
+          "title": "Live run verification (60s cycles)",
+          "status": "done"
+        },
+        {
+          "title": "Real trade execution on funded wallet",
+          "status": "blocked"
+        },
+        {
+          "title": "ROI measurement from filled trades",
+          "status": "blocked"
+        }
       ],
       "links": [
-        {"label": "Repo", "url": "https://github.com/Heykool/agent-zpredictor"}
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/agent-zpredictor"
+        },
+        {
+          "label": "Daily report context",
+          "url": "#",
+          "path": "/root/.openclaw/workspace-zjuniorcoder/agent-zpredictor/bin/daily_report.py"
+        }
       ]
     },
     {
       "id": "predictor-monitoring",
       "title": "Production Monitoring Tooling",
       "status": "done",
-      "assignees": ["ZJuniorCoder"],
+      "assignees": [
+        "ZJuniorCoder"
+      ],
       "date_assigned": "2026-03-04",
       "date_completed": "2026-03-04",
-      "description": "Daily summary reporting, risk hooks, and cron delivery for live predictor daemon.",
+      "description": "Daily operational reporting is live: signals, trade attempts/failures, open positions, risk hooks, and scanner-error triage are posted via cron to #predictor.",
       "decisions": [
-        {"date": "2026-03-04", "decision": "Use channel delivery via cron", "reason": "Cleaner than webhook-managed posting"}
+        {
+          "date": "2026-03-04",
+          "decision": "Use channel delivery via cron",
+          "reason": "Cleaner than webhook-managed posting"
+        }
       ],
       "subtasks": [
-        {"title": "Daily summary script", "status": "done"},
-        {"title": "Bug triage summary", "status": "done"},
-        {"title": "Discord delivery wiring", "status": "done"}
+        {
+          "title": "Daily summary script",
+          "status": "done"
+        },
+        {
+          "title": "Bug triage summary",
+          "status": "done"
+        },
+        {
+          "title": "Discord delivery wiring",
+          "status": "done"
+        }
       ],
       "links": [
-        {"label": "Repo", "url": "https://github.com/Heykool/agent-zpredictor"}
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/agent-zpredictor"
+        }
       ]
     },
     {
@@ -49,76 +111,147 @@
       "assignees": [],
       "date_assigned": "2026-03-04",
       "date_completed": null,
-      "description": "Evaluate ML overlay for 1h BTC direction probabilities.",
+      "description": "Attempted ML direction model for BTC 1h. Result did not meet deployment threshold, so model is parked and not connected to production decisions.",
       "decisions": [
-        {"date": "2026-03-04", "decision": "Do not deploy first model", "reason": "Performance under threshold"}
+        {
+          "date": "2026-03-04",
+          "decision": "Do not deploy first model",
+          "reason": "Performance under threshold"
+        }
       ],
       "subtasks": [
-        {"title": "Feature pipeline", "status": "done"},
-        {"title": "Training + eval", "status": "done"},
-        {"title": "Deployment", "status": "blocked"}
+        {
+          "title": "Feature pipeline",
+          "status": "done"
+        },
+        {
+          "title": "Training + eval",
+          "status": "done"
+        },
+        {
+          "title": "Deployment",
+          "status": "blocked"
+        }
       ],
       "links": [
-        {"label": "Task Spec", "url": "#", "path": "/root/.openclaw/shared-dev/tasks/PREDICTOR_V2_PHASE4_TRAINING.md"}
+        {
+          "label": "Task Spec",
+          "url": "#",
+          "path": "/root/.openclaw/shared-dev/tasks/PREDICTOR_V2_PHASE4_TRAINING.md"
+        }
       ]
     },
     {
       "id": "basevol-research",
       "title": "BaseVol 1H Options Strategy Research",
       "status": "in_progress",
-      "assignees": ["ZSeniorResearcher"],
+      "assignees": [
+        "ZSeniorResearcher"
+      ],
       "date_assigned": "2026-03-03",
       "date_completed": null,
-      "description": "Validate signal quality and execution viability for BaseVol options strategy.",
+      "description": "Research track remains active. Previous microstructure variant failed edge tests; current effort focuses on alternatives with measurable deployable expectancy.",
       "decisions": [
-        {"date": "2026-03-03", "decision": "Discard 1m CVD path", "reason": "No measurable edge"}
+        {
+          "date": "2026-03-03",
+          "decision": "Discard 1m CVD path",
+          "reason": "No measurable edge"
+        }
       ],
       "subtasks": [
-        {"title": "Real CVD validation", "status": "done"},
-        {"title": "Alternative signal discovery", "status": "in_progress"}
+        {
+          "title": "Real CVD validation",
+          "status": "done"
+        },
+        {
+          "title": "Alternative signal discovery",
+          "status": "in_progress"
+        }
       ],
       "links": [
-        {"label": "Validation report", "url": "#", "path": "/root/openclaw-backtest/reports/signal_validation_real_cvd.md"}
+        {
+          "label": "Validation report",
+          "url": "#",
+          "path": "/root/openclaw-backtest/reports/signal_validation_real_cvd.md"
+        }
       ]
     },
     {
       "id": "dashboard-kanban",
       "title": "Dashboard Kanban Board",
       "status": "review",
-      "assignees": ["ZJuniorCoder"],
+      "assignees": [
+        "ZJuniorCoder"
+      ],
       "date_assigned": "2026-03-04",
       "date_completed": null,
       "description": "Add Kanban board section in Agent Watch dashboard with API endpoints and task details modal.",
       "decisions": [
-        {"date": "2026-03-04", "decision": "Use tasks.json file data source", "reason": "Programmatic updates and easy tracking"}
+        {
+          "date": "2026-03-04",
+          "decision": "Use tasks.json file data source",
+          "reason": "Programmatic updates and easy tracking"
+        }
       ],
       "subtasks": [
-        {"title": "Implement /api/tasks endpoints", "status": "done"},
-        {"title": "Render board + modal", "status": "done"},
-        {"title": "Live verification", "status": "in_progress"}
+        {
+          "title": "Implement /api/tasks endpoints",
+          "status": "done"
+        },
+        {
+          "title": "Render board + modal",
+          "status": "done"
+        },
+        {
+          "title": "Live verification",
+          "status": "in_progress"
+        }
       ],
       "links": [
-        {"label": "Spec", "url": "#", "path": "/root/.openclaw/shared-dev/tasks/DASHBOARD-KANBAN-SPEC.md"}
+        {
+          "label": "Spec",
+          "url": "#",
+          "path": "/root/.openclaw/shared-dev/tasks/DASHBOARD-KANBAN-SPEC.md"
+        }
       ]
     },
     {
       "id": "agent-health-monitor",
       "title": "Agent Health Monitor System",
       "status": "done",
-      "assignees": ["ZJuniorCoder", "ZSeniorCoder"],
+      "assignees": [
+        "ZJuniorCoder",
+        "ZSeniorCoder"
+      ],
       "date_assigned": "2026-03-03",
       "date_completed": "2026-03-03",
       "description": "Add model mismatch checks and reporting between config and active sessions.",
       "decisions": [
-        {"date": "2026-03-03", "decision": "Keep check report-only", "reason": "Avoid unauthorized auto-fix"}
+        {
+          "date": "2026-03-03",
+          "decision": "Keep check report-only",
+          "reason": "Avoid unauthorized auto-fix"
+        }
       ],
       "subtasks": [
-        {"title": "Configured model extraction", "status": "done"},
-        {"title": "Session model comparison", "status": "done"},
-        {"title": "Alert/report output", "status": "done"}
+        {
+          "title": "Configured model extraction",
+          "status": "done"
+        },
+        {
+          "title": "Session model comparison",
+          "status": "done"
+        },
+        {
+          "title": "Alert/report output",
+          "status": "done"
+        }
       ],
       "links": [
-        {"label": "Repo", "url": "https://github.com/Heykool/agent-health-monitor"}
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/agent-health-monitor"
+        }
       ]
     }
   ]
