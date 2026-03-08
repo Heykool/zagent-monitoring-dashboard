@@ -34,6 +34,7 @@ function loadTasks() {
       id: String(t.id),
       title: String(t.title),
       status,
+      board: String(t.board || '').toLowerCase() === 'research' ? 'research' : 'dev',
       assignees: Array.isArray(t.assignees) ? t.assignees : [],
       date_assigned: t.date_assigned || null,
       date_completed: t.date_completed || null,
@@ -228,6 +229,22 @@ app.get('/api/tasks/:id', (req, res) => {
   const task = loadTasks().find((t) => t.id === req.params.id);
   if (!task) return res.status(404).json({ error: 'Task not found' });
   res.json(task);
+});
+
+app.get('/api/cron', (_req, res) => {
+  try {
+    const output = execSync('openclaw cron list --json', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 20000,
+      maxBuffer: 1024 * 1024 * 4,
+    });
+    const payload = JSON.parse(output);
+    const jobs = Array.isArray(payload?.jobs) ? payload.jobs : [];
+    res.json({ jobs, count: jobs.length, fetchedAt: new Date().toISOString() });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch cron jobs', details: String(e?.message || e) });
+  }
 });
 
 app.listen(PORT, HOST, () => { console.log(`Agent Watch Dashboard running on http://${HOST}:${PORT}`); });

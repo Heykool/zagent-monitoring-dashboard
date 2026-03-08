@@ -228,6 +228,27 @@ header{
 @media(max-width:1200px){.kanban-grid{grid-template-columns:repeat(2,minmax(240px,1fr));}}
 @media(max-width:700px){.kanban-grid{grid-template-columns:1fr;}}
 .kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:220px;}
+
+/* Cron Flow */
+#cron-section{margin-bottom:28px;}
+.cron-deps{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.dep-pill{border:1px dashed var(--border2);background:var(--bg3);border-radius:999px;padding:6px 10px;font-size:.72rem;color:var(--text-dim);}
+.cron-group{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;}
+.cron-group-head{padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.75rem;color:var(--text-hi);background:rgba(0,0,0,.18);}
+.cron-row{display:grid;grid-template-columns:150px 120px 1fr 180px 100px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid rgba(255,255,255,.03);}
+.cron-row:first-child{border-top:none;}
+.cron-cell{font-size:.78rem;color:var(--text);}
+.cron-cell.mono{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);}
+.cron-task{font-size:.8rem;color:var(--text-hi);}
+.cron-meta{font-size:.68rem;color:var(--text-dim);margin-top:2px;}
+.cron-badge{font-family:var(--mono);font-size:.68rem;padding:4px 8px;border-radius:999px;border:1px solid;display:inline-block;text-align:center;min-width:84px;}
+.cron-badge.ok{color:var(--green);border-color:var(--green);background:rgba(38,208,124,.1);}
+.cron-badge.error{color:var(--red);border-color:var(--red);background:rgba(255,77,106,.1);}
+.cron-badge.new{color:var(--yellow);border-color:var(--yellow);background:rgba(245,208,32,.12);}
+.cron-badge.fixed{color:#4da3ff;border-color:#4da3ff;background:rgba(77,163,255,.12);}
+.cron-badge.pending{color:#c084fc;border-color:#c084fc;background:rgba(192,132,252,.12);}
+.cron-badge.disabled{color:#9ca3af;border-color:#6b7280;background:rgba(156,163,175,.1);}
+@media(max-width:980px){.cron-row{grid-template-columns:1fr;gap:4px;}}
 .kc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-family:var(--mono);font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.7px;}
 .kc-count{background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--text-hi);}
 .task-card{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
@@ -419,6 +440,7 @@ header{
       <div class="view-switch">
         <button id="view-overview" class="view-btn active" onclick="switchView('overview')">Overview</button>
         <button id="view-tasks" class="view-btn" onclick="switchView('tasks')">Tasks</button>
+        <button id="view-cron" class="view-btn" onclick="switchView('cron')">Cron Flow</button>
       </div>
       <div id="gw-badge" class="badge badge-offline">GW OFFLINE</div>
       <div id="last-update">—</div>
@@ -549,6 +571,18 @@ header{
     </div>
   </div>
 
+  <div id="cron-view" class="hidden">
+    <div id="cron-section" class="anim anim-delay-3">
+      <div class="section-head">
+        <div class="section-title">Cron Jobs Flow</div>
+      </div>
+      <div id="cron-deps" class="cron-deps"></div>
+      <div id="cron-groups" class="cron-groups">
+        <div class="empty">Loading cron jobs…</div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <div id="task-modal" onclick="if(event.target.id==='task-modal') closeTaskModal()">
@@ -595,6 +629,7 @@ header{
 // ─── State ──────────────────────────────────────────────────────────
 let allAgents = [];
 let allTasks = { backlog: [], in_progress: [], review: [], done: [] };
+let allCronJobs = [];
 let currentView = 'overview';
 let arTimer = null;
 let arActive = true;
@@ -1192,15 +1227,29 @@ function switchView(view){
   currentView = view;
   const ov = document.getElementById('overview-view');
   const tv = document.getElementById('tasks-view');
+  const cv = document.getElementById('cron-view');
   const bov = document.getElementById('view-overview');
   const btv = document.getElementById('view-tasks');
+  const bcv = document.getElementById('view-cron');
+
+  ov.classList.add('hidden');
+  tv.classList.add('hidden');
+  cv.classList.add('hidden');
+  bov.classList.remove('active');
+  btv.classList.remove('active');
+  bcv.classList.remove('active');
+
   if(view === 'tasks'){
-    ov.classList.add('hidden'); tv.classList.remove('hidden');
-    bov.classList.remove('active'); btv.classList.add('active');
+    tv.classList.remove('hidden');
+    btv.classList.add('active');
     renderTasks(allTasks);
+  } else if (view === 'cron') {
+    cv.classList.remove('hidden');
+    bcv.classList.add('active');
+    loadCron();
   } else {
-    tv.classList.add('hidden'); ov.classList.remove('hidden');
-    btv.classList.remove('active'); bov.classList.add('active');
+    ov.classList.remove('hidden');
+    bov.classList.add('active');
   }
 }
 
@@ -1215,24 +1264,34 @@ function subtaskProgress(subtasks){
 function renderTasks(grouped){
   const grid = document.getElementById('kanban-grid');
   if(!grid) return;
-  const order = ['backlog','in_progress','review','done'];
-  const cols = order.map((k)=>{
-    const tasks = grouped?.[k] || [];
-    const cards = tasks.map(t=>{
-      const p = subtaskProgress(t.subtasks);
-      return `<div class="task-card ${k}" onclick="openTaskModal('${esc(t.id)}')">
-        <div class="tc-title">${esc(t.title)}</div>
-        <div class="tc-meta">${(t.assignees||[]).length ? esc(t.assignees.join(', ')) : 'Unassigned'}</div>
-        <div class="tc-date">Assigned: ${esc(t.date_assigned||'—')} · ${(t.decisions||[]).length} decisions</div>
-        <div class="tc-progress">
-          <div class="tc-progress-row"><span>Progress</span><span>${p.done}/${p.total}</span></div>
-          <div class="tc-bar"><div class="tc-fill" style="width:${p.pct}%"></div></div>
-        </div>
-      </div>`;
-    }).join('') || '<div class="empty" style="padding:14px 0">No tasks</div>';
-    return `<div class="kanban-col"><div class="kc-head"><span>${statusLabel(k)}</span><span class="kc-count">${tasks.length}</span></div>${cards}</div>`;
-  }).join('');
-  grid.innerHTML = cols;
+
+  const all = ['backlog','in_progress','review','done'].flatMap((k)=>grouped?.[k] || []);
+  const devTasks = all.filter((t)=>String(t.board||'dev').toLowerCase()==='dev');
+  const researchTasks = all.filter((t)=>String(t.board||'dev').toLowerCase()==='research');
+
+  const renderBoard = (title, tasks) => {
+    const order = ['backlog','in_progress','review','done'];
+    const cols = order.map((k)=>{
+      const colTasks = tasks.filter((t)=>String(t.status)===k);
+      const cards = colTasks.map(t=>{
+        const p = subtaskProgress(t.subtasks);
+        return `<div class="task-card ${k}" onclick="openTaskModal('${esc(t.id)}')">
+          <div class="tc-title">${esc(t.title)}</div>
+          <div class="tc-meta">${(t.assignees||[]).length ? esc(t.assignees.join(', ')) : 'Unassigned'}</div>
+          <div class="tc-date">Assigned: ${esc(t.date_assigned||'—')} · ${(t.decisions||[]).length} decisions</div>
+          <div class="tc-progress">
+            <div class="tc-progress-row"><span>Progress</span><span>${p.done}/${p.total}</span></div>
+            <div class="tc-bar"><div class="tc-fill" style="width:${p.pct}%"></div></div>
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty" style="padding:14px 0">No tasks</div>';
+      return `<div class="kanban-col"><div class="kc-head"><span>${statusLabel(k)}</span><span class="kc-count">${colTasks.length}</span></div>${cards}</div>`;
+    }).join('');
+
+    return `<div style="margin-bottom:22px"><div class="section-title" style="margin-bottom:10px">${title}</div><div class="kanban-grid">${cols}</div></div>`;
+  };
+
+  grid.innerHTML = `${renderBoard('DEV TASKS', devTasks)}${renderBoard('RESEARCH TASKS', researchTasks)}`;
 }
 
 async function loadTasks(){
@@ -1244,6 +1303,103 @@ async function loadTasks(){
   } catch(_e){
     const grid = document.getElementById('kanban-grid');
     if(grid) grid.innerHTML = '<div class="error-box">Failed to load tasks</div>';
+  }
+}
+
+function cronCategory(job){
+  const aid = String(job.agentId||'').toLowerCase();
+  const name = String(job.name||'').toLowerCase();
+  if(aid==='zhypetrader') return '⚡ Trading';
+  if(name.includes('threat') || aid==='zcybersecagent') return '🛡️ Security';
+  if(aid==='zseniorresearcher' || aid==='zcryptoanalyst') return '🔬 Research';
+  if(aid==='zjuniorcoder') return '🔧 Dev/Ops';
+  if(aid==='main' && (name.includes('maintenance') || name.includes('memory'))) return '🏥 Maintenance';
+  if(aid==='zjobanalyst' || aid==='zbusinessanalyst') return '📊 Daily Reports';
+  if(job.schedule?.kind === 'once') return '📌 One-Shot';
+  return '📌 One-Shot';
+}
+
+function cronStatus(job){
+  if(job.enabled === false) return {key:'disabled', label:'DISABLED'};
+  const st = String(job?.state?.lastRunStatus || job?.state?.lastStatus || '').toLowerCase();
+  const errs = Number(job?.state?.consecutiveErrors || 0);
+  const hasRun = !!job?.state?.lastRunAtMs;
+  const isOncePending = job?.schedule?.kind === 'once' && (!hasRun || (job?.state?.nextRunAtMs && job.state.nextRunAtMs > Date.now()));
+  if(isOncePending) return {key:'pending', label:'PENDING'};
+  if(st === 'error' || errs > 0) return {key:'error', label:`ERROR${errs>0?` (${errs})`:''}`};
+  if(st === 'ok' && errs === 0 && job?.updatedAtMs && job?.state?.lastRunAtMs && (job.updatedAtMs - job.state.lastRunAtMs) > 0) return {key:'fixed', label:'FIXED'};
+  if(!hasRun || st === 'never') return {key:'new', label:'NEW/IDLE'};
+  if(st === 'ok') return {key:'ok', label:'OK'};
+  return {key:'new', label:'NEW/IDLE'};
+}
+
+function relTime(tsMs){
+  if(!tsMs) return 'never';
+  const diff = Math.round((tsMs - Date.now())/1000);
+  const abs = Math.abs(diff);
+  if(abs < 60) return diff >= 0 ? 'in <1m' : 'just now';
+  const mins = Math.round(abs/60);
+  if(mins < 60) return diff >= 0 ? `in ${mins}m` : `${mins}m ago`;
+  const hrs = Math.round(mins/60);
+  if(hrs < 48) return diff >= 0 ? `in ${hrs}h` : `${hrs}h ago`;
+  const d = new Date(tsMs);
+  return d.toLocaleString();
+}
+
+function renderCron(jobs){
+  const deps = document.getElementById('cron-deps');
+  const groupsEl = document.getElementById('cron-groups');
+  if(!groupsEl || !deps) return;
+
+  deps.innerHTML = `
+    <div class="dep-pill">🔗 Base Ecosystem AM → Crypto Analyst AM</div>
+    <div class="dep-pill">🔗 Cybersec Threat Briefing → Security Audit</div>
+  `;
+
+  if(!Array.isArray(jobs) || !jobs.length){
+    groupsEl.innerHTML = '<div class="empty">No cron jobs found</div>';
+    return;
+  }
+
+  const grouped = {};
+  for(const j of jobs){
+    const cat = cronCategory(j);
+    grouped[cat] = grouped[cat] || [];
+    grouped[cat].push(j);
+  }
+
+  const order = ['⚡ Trading','🔬 Research','🛡️ Security','🔧 Dev/Ops','🏥 Maintenance','📊 Daily Reports','📌 One-Shot'];
+  const html = order.filter(k => grouped[k]?.length).map(cat => {
+    const rows = grouped[cat].map(j => {
+      const st = cronStatus(j);
+      const sched = j.schedule?.kind === 'cron' ? (j.schedule?.expr || 'cron') : (j.schedule?.kind || 'once');
+      const channel = j?.delivery?.to || j?.delivery?.channel || '—';
+      const lastErr = j?.state?.lastError ? String(j.state.lastError) : '';
+      return `<div class="cron-row">
+        <div class="cron-cell mono">${esc(sched)}</div>
+        <div class="cron-cell mono">${esc(j.agentId || '—')}</div>
+        <div class="cron-cell"><div class="cron-task">${esc(j.name || 'Unnamed')}</div><div class="cron-meta">Last: ${esc(relTime(j?.state?.lastRunAtMs))} · Next: ${esc(relTime(j?.state?.nextRunAtMs))}</div></div>
+        <div class="cron-cell mono">${esc(channel)}</div>
+        <div class="cron-cell"><span class="cron-badge ${st.key}" title="${esc(lastErr)}">${esc(st.label)}</span></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="cron-group"><div class="cron-group-head">${cat} (${grouped[cat].length})</div>${rows}</div>`;
+  }).join('');
+
+  groupsEl.innerHTML = html;
+}
+
+async function loadCron(){
+  try{
+    const res = await fetch('/api/cron');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allCronJobs = Array.isArray(data.jobs) ? data.jobs : [];
+    if(currentView==='cron') renderCron(allCronJobs);
+  }catch(_e){
+    const el = document.getElementById('cron-groups');
+    if(el) el.innerHTML = '<div class="error-box">Failed to load cron jobs</div>';
   }
 }
 
@@ -1281,6 +1437,7 @@ async function loadData(){
     renderTokens(data.summary);
     renderAgents(data.agents||[]);
     await loadTasks();
+    await loadCron();
   } catch(e){
     const eb = document.getElementById('error-box');
     eb.textContent = '⚠ Failed to load data: '+e.message;

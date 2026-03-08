@@ -69,7 +69,8 @@
           "url": "#",
           "path": "/root/.openclaw/workspace-zjuniorcoder/agent-zpredictor/bin/daily_report.py"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "predictor-monitoring",
@@ -107,7 +108,8 @@
           "label": "Repo",
           "url": "https://github.com/Heykool/agent-zpredictor"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "predictor-phase4-ml",
@@ -144,7 +146,8 @@
           "url": "#",
           "path": "/root/.openclaw/shared-dev/tasks/PREDICTOR_V2_PHASE4_TRAINING.md"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "basevol-research",
@@ -179,7 +182,8 @@
           "url": "#",
           "path": "/root/openclaw-backtest/reports/signal_validation_real_cvd.md"
         }
-      ]
+      ],
+      "board": "research"
     },
     {
       "id": "dashboard-kanban",
@@ -223,7 +227,8 @@
           "url": "#",
           "path": "/root/.openclaw/shared-dev/tasks/DASHBOARD-KANBAN-SPEC.md"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "agent-health-monitor",
@@ -262,7 +267,8 @@
           "label": "Repo",
           "url": "https://github.com/Heykool/agent-health-monitor"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "predictor-algorithm-enhancement",
@@ -291,7 +297,8 @@
           "label": "Repo",
           "url": "https://github.com/Heykool/agent-zpredictor"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "hypetrader-scanner-fix",
@@ -320,18 +327,19 @@
           "url": "#",
           "path": "/root/.openclaw/workspace-zjuniorcoder/hyperliquid-trader"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "crypto-analysis-dashboard-standalone",
       "title": "Crypto Analysis Dashboard (new standalone)",
-      "status": "in_progress",
+      "status": "done",
       "assignees": [
         "ZJuniorCoder",
         "ZSeniorCoder"
       ],
       "date_assigned": "2026-03-04",
-      "date_completed": null,
+      "date_completed": "2026-03-04",
       "description": "Standalone dashboard for ZCryptoAnalyst with redesigned v2 UI, chart integration, and live token metrics.",
       "decisions": [],
       "subtasks": [
@@ -341,11 +349,11 @@
         },
         {
           "title": "Chart resolver hardening",
-          "status": "in_progress"
+          "status": "done"
         },
         {
           "title": "Stakeholder signoff pass",
-          "status": "in_progress"
+          "status": "done"
         }
       ],
       "links": [
@@ -353,17 +361,18 @@
           "label": "Repo",
           "url": "https://github.com/Heykool/crypto-analyst-dashboard"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "dashboard-kanban-enhancement",
       "title": "Dashboard Kanban Enhancement (agent watcher)",
-      "status": "in_progress",
+      "status": "done",
       "assignees": [
         "ZJuniorCoder"
       ],
       "date_assigned": "2026-03-04",
-      "date_completed": null,
+      "date_completed": "2026-03-04",
       "description": "Enhance Agent Watch dashboard task board so all active team tasks are visible and trackable.",
       "decisions": [
         {
@@ -383,7 +392,7 @@
         },
         {
           "title": "Verify /api/tasks output",
-          "status": "in_progress"
+          "status": "done"
         }
       ],
       "links": [
@@ -391,27 +400,28 @@
           "label": "Repo",
           "url": "https://github.com/Heykool/agent-watch-dashboard"
         }
-      ]
+      ],
+      "board": "dev"
     },
     {
       "id": "limitless-exchange-research",
       "title": "Limitless Exchange Research",
-      "status": "in_progress",
+      "status": "done",
       "assignees": [
         "ZSeniorResearcher"
       ],
       "date_assigned": "2026-03-04",
-      "date_completed": null,
+      "date_completed": "2026-03-04",
       "description": "Research Limitless markets, endpoints, and execution constraints for predictor strategy quality.",
       "decisions": [],
       "subtasks": [
         {
           "title": "Market/data API mapping",
-          "status": "in_progress"
+          "status": "done"
         },
         {
           "title": "Execution path recommendations",
-          "status": "backlog"
+          "status": "done"
         }
       ],
       "links": [
@@ -420,31 +430,33 @@
           "url": "#",
           "path": "/root/.openclaw/workspace-zjuniorcoder/limitless-exchange-ts-sdk"
         }
-      ]
+      ],
+      "board": "research"
     },
     {
       "id": "api-mega-list-review",
       "title": "API Mega List Review",
-      "status": "in_progress",
+      "status": "done",
       "assignees": [
         "ZSeniorResearcher",
         "ZJuniorCoder"
       ],
       "date_assigned": "2026-03-04",
-      "date_completed": null,
+      "date_completed": "2026-03-04",
       "description": "Review and prioritize large candidate API list for trading/research integrations.",
       "decisions": [],
       "subtasks": [
         {
           "title": "Categorize by use-case",
-          "status": "in_progress"
+          "status": "done"
         },
         {
           "title": "Rank by reliability/cost",
-          "status": "backlog"
+          "status": "done"
         }
       ],
-      "links": []
+      "links": [],
+      "board": "research"
     },
     {
       "id": "crypto-analyst-agent-blueprint",
@@ -473,6 +485,37 @@
           "label": "Specs directory",
           "url": "#",
           "path": "/root/.openclaw/shared-dev/specs"
+        }
+      ],
+      "board": "dev"
+    },
+    {
+      "id": "crypto-dashboard-bug-fixes",
+      "title": "Crypto Dashboard bug fixes (rate limits, report loading)",
+      "status": "in_progress",
+      "board": "dev",
+      "assignees": [
+        "ZJuniorCoder",
+        "ZSeniorCoder"
+      ],
+      "date_assigned": "2026-03-05",
+      "date_completed": null,
+      "description": "Track ongoing crypto dashboard fixes: data-source migration, report auto-loading, and UI reliability issues.",
+      "decisions": [],
+      "subtasks": [
+        {
+          "title": "Replace fragile API dependency",
+          "status": "done"
+        },
+        {
+          "title": "Fix report auto-load in recent scans",
+          "status": "in_progress"
+        }
+      ],
+      "links": [
+        {
+          "label": "Repo",
+          "url": "https://github.com/Heykool/crypto-analyst-dashboard"
         }
       ]
     }
